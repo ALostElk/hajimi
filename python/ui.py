@@ -1,4 +1,5 @@
 import tkinter as tk
+import math
 from calculator import Calculator
 from character import HajimiCharacter
 from AI import HajimiAI
