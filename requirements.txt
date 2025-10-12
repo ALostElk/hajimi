@@ -1,2 +1,15 @@
+# 哈基米计算器依赖包
+# Python 版本要求: Python 3.7+
+
+# 音频处理
 pygame>=2.1.0
+
+# 图像处理
 Pillow>=9.0.0
+
+# 注意：tkinter 是 Python 标准库的一部分，通常已预装
+# 如果使用 Python 官方安装包，tkinter 应该已经可用
+# 如果遇到 tkinter 导入错误，请参考以下安装方式：
+# - Windows: 重新安装 Python 并勾选 "tcl/tk and IDLE" 选项
+# - Ubuntu/Debian: sudo apt-get install python3-tk
+# - macOS: brew install python-tk
