@@ -8,32 +8,46 @@ from AI import HajimiAI
 class HajimiUI:
     def __init__(self, master):
         self.master = master
-        self.calc = Calculator()
+        try:
+            self.calc = Calculator()
+            print("Calculator初始化成功")
+        except Exception as e:
+            print(f"Calculator初始化失败: {e}")
+            import traceback
+            traceback.print_exc()
+        
         self.hajimi = HajimiCharacter()
         self.ai = HajimiAI()
 
-        # 哈基米主题色彩 - 更丰富的配色
+        # 哈基米主题色彩 - 双色调圆润配色
         self.colors = {
-            'primary': '#FF6B9D',      # 粉色主色调
-            'primary_light': '#FFB3D1', # 浅粉色
-            'primary_dark': '#E91E63',  # 深粉色
-            'secondary': '#4ECDC4',    # 薄荷绿
-            'secondary_light': '#81E6D9', # 浅薄荷绿
-            'accent': '#45B7D1',       # 天蓝色
-            'accent_light': '#74C0FC', # 浅天蓝
-            'background': '#F8F9FA',   # 浅灰背景
-            'background_dark': '#E9ECEF', # 深灰背景
-            'text': '#2C3E50',         # 深蓝文字
-            'text_light': '#6C757D',   # 浅灰文字
+            # 主色调：柔和粉色系
+            'primary': '#FF8FA3',      # 主粉色
+            'primary_light': '#FFB3C6', # 浅粉色
+            'primary_dark': '#E85A7A',  # 深粉色
+            
+            # 辅助色：柔和薄荷绿系
+            'secondary': '#6BCF7F',    # 主薄荷绿
+            'secondary_light': '#8DD8A3', # 浅薄荷绿
+            'secondary_dark': '#4ECDC4',  # 深薄荷绿
+            
+            # 强调色
+            'accent': '#6BB6FF',       # 天蓝色强调色
+            'accent_light': '#8CC8FF', # 浅天蓝色
+            
+            # 基础色
+            'background': '#FDFCFB',   # 温暖背景
+            'background_dark': '#F5F3F0', # 深灰背景
+            'text': '#3A3A3A',         # 深色文字
+            'text_light': '#8A8A8A',   # 浅灰文字
             'button_normal': '#FFFFFF', # 白色按钮
-            'button_hover': '#E8F4FD',  # 悬停效果
-            'display_bg': '#2C3E50',   # 深色显示区
-            'display_text': '#FFFFFF',  # 白色显示文字
-            'shadow': '#00000020',     # 阴影色
-            'border': '#DEE2E6',       # 边框色
-            'success': '#28A745',      # 成功色
-            'warning': '#FFC107',      # 警告色
-            'danger': '#DC3545'        # 危险色
+            'button_hover': '#F0F8FF',  # 悬停效果
+            'display_bg': '#2D3748',   # 深色显示区
+            'display_text': '#F7FAFC',  # 白色显示文字
+            'border': '#E2E8F0',       # 边框色
+            'success': '#6BCF7F',      # 成功色（使用薄荷绿）
+            'warning': '#FF8FA3',      # 警告色（使用粉色）
+            'danger': '#E85A7A',       # 危险色（使用深粉色）
         }
         
         # 设置主窗口样式
@@ -41,8 +55,8 @@ class HajimiUI:
         
         # 创建界面布局
         self.create_title()
+        self.create_sound_control()  # 声音控制移到上方
         self.create_display_area()
-        self.create_sound_control()
         self.create_button_areas()
         
         # 绑定键盘事件
@@ -64,32 +78,22 @@ class HajimiUI:
         )
         title_label.pack()
         
-        # 副标题装饰
-        subtitle_label = tk.Label(
-            title_frame,
-            text="🐱 曼波的计算助手 🐱",
-            font=("微软雅黑", 10),
-            bg=self.colors['background'],
-            fg=self.colors['text_light']
-        )
-        subtitle_label.pack(pady=(2, 0))
-    
     def create_display_area(self):
-        """创建显示区域"""
-        # 主显示区域容器
+        """创建圆润美观的显示区域"""
+        # 主显示区域容器 - 增加内边距
         main_display_frame = tk.Frame(self.master, bg=self.colors['background'])
-        main_display_frame.pack(pady=15, padx=25, fill='x')
+        main_display_frame.pack(pady=20, padx=30, fill='x')
         
-        # 左侧：计算显示区域 - 添加渐变效果
+        # 左侧：计算显示区域 - 更柔和的边框
         display_frame = tk.Frame(
             main_display_frame, 
             bg=self.colors['display_bg'], 
             relief='solid', 
-            bd=2,
+            bd=1,
             highlightbackground=self.colors['border'],
             highlightthickness=1
         )
-        display_frame.pack(side='left', fill='both', expand=True, padx=(0, 15))
+        display_frame.pack(side='left', fill='both', expand=True, padx=(0, 20))
         
         # 输入显示区域装饰
         input_container = tk.Frame(display_frame, bg=self.colors['display_bg'])
@@ -173,21 +177,21 @@ class HajimiUI:
         )
         self.result_label.pack(fill='x', pady=2)
         
-        # 右侧：角色表情区域 - 美化设计
+        # 右侧：角色表情区域 - 更圆润的设计
         character_frame = tk.Frame(
             main_display_frame, 
             bg=self.colors['display_bg'], 
             relief='solid', 
-            bd=2,
+            bd=1,
             highlightbackground=self.colors['border'],
             highlightthickness=1
         )
-        character_frame.pack(side='right', fill='y', ipadx=10)
+        character_frame.pack(side='right', fill='y', ipadx=15, ipady=10)
         
         # 角色标题
         character_title = tk.Label(
             character_frame,
-            text="曼波状态",
+            text="哈基米状态",
             font=("微软雅黑", 9),
             bg=self.colors['display_bg'],
             fg=self.colors['text_light']
@@ -205,7 +209,7 @@ class HajimiUI:
         # 角色状态标签
         self.character_status_label = tk.Label(
             character_frame,
-            text="曼波",
+            text="哈基米",
             font=("微软雅黑", 11, "bold"),
             bg=self.colors['display_bg'],
             fg=self.colors['primary']
@@ -213,42 +217,36 @@ class HajimiUI:
         self.character_status_label.pack(pady=10)
     
     def create_sound_control(self):
-        """创建声音控制面板"""
-        # 声音控制容器
+        """创建紧凑的声音控制面板"""
+        # 声音控制容器 - 紧凑设计
         sound_frame = tk.Frame(self.master, bg=self.colors['background'])
-        sound_frame.pack(pady=5, padx=20, fill='x')
+        sound_frame.pack(pady=8, padx=20, fill='x')
         
-        # 声音控制标题
-        sound_title = tk.Label(
-            sound_frame,
-            text="🔊 声音控制",
-            font=("微软雅黑", 10, "bold"),
-            bg=self.colors['background'],
-            fg=self.colors['primary']
-        )
-        sound_title.pack(side='left', padx=(0, 10))
+        # 左侧：音量滑块和标签
+        left_frame = tk.Frame(sound_frame, bg=self.colors['background'])
+        left_frame.pack(side='left', fill='x', expand=True)
         
-        # 音量滑块容器
-        volume_container = tk.Frame(sound_frame, bg=self.colors['background'])
-        volume_container.pack(side='left', padx=10)
+        # 音量标签和滑块在同一行
+        volume_row = tk.Frame(left_frame, bg=self.colors['background'])
+        volume_row.pack(fill='x')
         
         # 音量标签
         self.volume_label = tk.Label(
-            volume_container,
+            volume_row,
             text="音量: 50%",
             font=("微软雅黑", 9),
             bg=self.colors['background'],
             fg=self.colors['text']
         )
-        self.volume_label.pack()
+        self.volume_label.pack(side='left', padx=(0, 8))
         
-        # 音量滑块
+        # 音量滑块 - 更紧凑
         self.volume_scale = tk.Scale(
-            volume_container,
+            volume_row,
             from_=0,
             to=100,
             orient='horizontal',
-            length=120,
+            length=100,
             resolution=10,
             bg=self.colors['background'],
             fg=self.colors['text'],
@@ -258,33 +256,37 @@ class HajimiUI:
             command=self.on_volume_change
         )
         self.volume_scale.set(50)  # 默认音量50%
-        self.volume_scale.pack()
+        self.volume_scale.pack(side='left', padx=(0, 10))
         
-        # 静音按钮
+        # 右侧：控制按钮
+        right_frame = tk.Frame(sound_frame, bg=self.colors['background'])
+        right_frame.pack(side='right')
+        
+        # 静音按钮 - 紧凑设计
         self.mute_button = tk.Button(
-            volume_container,
-            text="🔇 静音",
-            font=("微软雅黑", 9, "bold"),
+            right_frame,
+            text="🔇",
+            font=("微软雅黑", 10, "bold"),
             bg=self.colors['text_light'],
             fg='#FFFFFF',
             relief='flat',
             bd=0,
-            padx=10,
-            pady=2,
+            width=3,
+            height=1,
             command=self.toggle_mute,
             cursor='hand2'
         )
-        self.mute_button.pack(pady=(5, 0))
+        self.mute_button.pack(side='left', padx=5)
         
-        # 音量指示器
+        # 音量指示器 - 紧凑设计
         self.volume_indicator = tk.Label(
-            sound_frame,
+            right_frame,
             text="🔊",
-            font=("微软雅黑", 14),
+            font=("微软雅黑", 12),
             bg=self.colors['background'],
             fg=self.colors['success']
         )
-        self.volume_indicator.pack(side='right', padx=10)
+        self.volume_indicator.pack(side='left', padx=5)
     
     def create_button_areas(self):
         """创建按钮区域"""
@@ -345,27 +347,27 @@ class HajimiUI:
             self.on_click('Del')
     
     def create_all_buttons(self):
-        """创建简洁实用的按钮布局"""
-        # 主按钮网格容器
+        """创建统一圆润的按钮布局"""
+        # 主按钮网格容器 - 增加圆润内边距
         main_grid = tk.Frame(self.button_container, bg=self.colors['background'])
-        main_grid.pack(expand=True)
+        main_grid.pack(expand=True, padx=15, pady=15)
         
-        # 传统计算器布局 - 4列布局
+        # 配置网格权重，让按钮均匀分布
+        for i in range(4):
+            main_grid.columnconfigure(i, weight=1)
+        for i in range(8):
+            main_grid.rowconfigure(i, weight=1)
+        
+        # 优化后的按钮布局 - 更合理的分组
         buttons = [
-            # 第一行：控制键和运算符
+            ['sin(', 'cos(', 'tan(', 'sqrt('],
+            ['ln(', 'lg(', 'pi', 'e'],
             ['AC', '⌫', 'Del', '÷'],
-            # 第二行：数字和运算符
             ['7', '8', '9', '×'],
             ['4', '5', '6', '-'],
             ['1', '2', '3', '+'],
-            # 第五行：0和小数点
             ['0', '.', '(', ')'],
-            # 第六行：三角函数和百分比
-            ['sin(', 'cos(', '%', '='],
-            # 第七行：其他科学函数
-            ['tan(', 'sqrt(', 'ln(', 'lg('],
-            # 第八行：常量和特殊功能
-            ['pi', 'e', 'BMR', 'AI开关']
+            ['BMR', 'AI开关', '%', '=']
         ]
 
         for r, row in enumerate(buttons):
@@ -394,107 +396,141 @@ class HajimiUI:
     
     
     def create_styled_button(self, parent, text, style, row, column):
-        """创建样式化按钮"""
-        styles = {
-            'number': {
+        """创建统一圆润样式化按钮"""
+        # 简化为两种主要样式：粉色系和薄荷绿系
+        if style == 'number':
+            btn_config = {
                 'bg': self.colors['button_normal'], 
                 'fg': self.colors['text'],
                 'activebackground': self.colors['button_hover'],
                 'activeforeground': self.colors['text']
-            },
-            'operator': {
+            }
+        elif style == 'operator':
+            btn_config = {
                 'bg': self.colors['secondary'], 
                 'fg': '#FFFFFF',
                 'activebackground': self.colors['secondary_light'],
                 'activeforeground': '#FFFFFF'
-            },
-            'equals': {
-                'bg': self.colors['success'], 
-                'fg': '#FFFFFF',
-                'activebackground': '#218838',
-                'activeforeground': '#FFFFFF'
-            },
-            'bmr': {
-                'bg': self.colors['warning'], 
-                'fg': '#FFFFFF',
-                'activebackground': '#E0A800',
-                'activeforeground': '#FFFFFF'
-            },
-            'function': {
+            }
+        elif style == 'equals':
+            btn_config = {
                 'bg': self.colors['primary'], 
                 'fg': '#FFFFFF',
                 'activebackground': self.colors['primary_light'],
                 'activeforeground': '#FFFFFF'
-            },
-            'control': {
+            }
+        elif style == 'function':
+            btn_config = {
+                'bg': self.colors['primary'], 
+                'fg': '#FFFFFF',
+                'activebackground': self.colors['primary_light'],
+                'activeforeground': '#FFFFFF'
+            }
+        elif style == 'bmr':
+            btn_config = {
+                'bg': self.colors['secondary'], 
+                'fg': '#FFFFFF',
+                'activebackground': self.colors['secondary_light'],
+                'activeforeground': '#FFFFFF'
+            }
+        elif style == 'control':
+            btn_config = {
                 'bg': self.colors['text_light'], 
                 'fg': '#FFFFFF',
                 'activebackground': self.colors['text'],
                 'activeforeground': '#FFFFFF'
-            },
-            'ai_control': {
-                'bg': self.colors['accent'], 
+            }
+        elif style == 'ai_control':
+            btn_config = {
+                'bg': self.colors['primary'], 
                 'fg': '#FFFFFF',
-                'activebackground': self.colors['accent_light'],
+                'activebackground': self.colors['primary_light'],
                 'activeforeground': '#FFFFFF'
             }
-        }
+        else:
+            # 默认样式
+            btn_config = {
+                'bg': self.colors['button_normal'], 
+                'fg': self.colors['text'],
+                'activebackground': self.colors['button_hover'],
+                'activeforeground': self.colors['text']
+            }
         
+        # 创建圆润按钮
         btn = tk.Button(
             parent,
             text=text,
             font=("微软雅黑", 12, "bold"),
             width=8, height=2,
-            relief='solid',
-            bd=1,
+            relief='flat',
+            bd=0,
+            padx=12,
+            pady=8,
             command=lambda val=text: self.on_click(val),
             cursor='hand2',
-            **styles[style]
+            **btn_config
         )
         btn.grid(row=row, column=column, padx=4, pady=4, sticky='nsew')
         
         # 添加悬停效果和按下效果
-        btn.bind("<Enter>", lambda e, b=btn: self.button_hover_enter(b, styles[style]))
-        btn.bind("<Leave>", lambda e, b=btn: self.button_hover_leave(b, styles[style]))
-        btn.bind("<Button-1>", lambda e, b=btn: self.button_press_effect(b, styles[style]))
+        btn.bind("<Enter>", lambda e, b=btn: self.button_hover_enter(b, btn_config))
+        btn.bind("<Leave>", lambda e, b=btn: self.button_hover_leave(b, btn_config))
+        btn.bind("<Button-1>", lambda e, b=btn: self.button_press_effect(b, btn_config))
         
         return btn
     
+    def configure_rounded_button(self, button, style):
+        """配置按钮的圆角效果"""
+        # 由于tkinter原生不支持圆角，我们通过其他方式模拟圆润效果
+        # 设置按钮的字体和间距来营造圆润感
+        button.config(
+            font=("微软雅黑", 11, "bold"),
+            padx=8,
+            pady=4
+        )
+    
     def button_hover_enter(self, button, style):
-        """按钮悬停进入效果"""
+        """按钮悬停进入效果 - 圆润过渡"""
         if 'activebackground' in style:
             button.config(bg=style['activebackground'])
             if 'activeforeground' in style:
                 button.config(fg=style['activeforeground'])
     
     def button_hover_leave(self, button, style):
-        """按钮悬停离开效果"""
+        """按钮悬停离开效果 - 圆润过渡"""
         button.config(bg=style['bg'])
         button.config(fg=style['fg'])
     
     def button_press_effect(self, button, style):
-        """按钮按下效果"""
+        """按钮按下效果 - 圆润反馈"""
         original_bg = button.cget('bg')
         original_fg = button.cget('fg')
+        original_font = button.cget('font')
         
         # 按下时的颜色（稍微深一点）
         press_bg = self.darken_color(original_bg)
         press_fg = original_fg
         
-        button.config(bg=press_bg, fg=press_fg)
+        # 立即改变颜色和字体大小（模拟按下效果）
+        button.config(bg=press_bg, fg=press_fg, font=("微软雅黑", 11, "bold"))
         
-        # 100ms后恢复原色
-        self.master.after(100, lambda: button.config(bg=original_bg, fg=original_fg))
+        # 120ms后恢复原色和字体
+        self.master.after(120, lambda: [
+            button.config(bg=original_bg, fg=original_fg, font=original_font)
+        ])
+    
+    def animate_color_transition(self, widget, attribute, start_color, end_color, duration):
+        """颜色过渡动画"""
+        # 简化的颜色过渡
+        widget.config(**{attribute: end_color})
     
     def darken_color(self, color):
-        """将颜色变深"""
+        """将颜色变深 - 双色调深色效果"""
         color_map = {
             self.colors['button_normal']: self.colors['background_dark'],
-            self.colors['secondary']: '#3AB4A8',
-            self.colors['primary']: self.colors['primary_dark'],
-            self.colors['text_light']: '#495057',
-            self.colors['success']: '#1E7E34',
-            self.colors['warning']: '#D39E00'
+            self.colors['secondary']: self.colors['secondary_dark'],  # 薄荷绿深色
+            self.colors['primary']: self.colors['primary_dark'],      # 粉色深色
+            self.colors['text_light']: '#6B7280',
         }
         return color_map.get(color, color)
     
@@ -747,7 +783,7 @@ class HajimiUI:
         
         # 更新角色状态文字
         status_texts = {
-            'default': "东海帝王",
+            'default': "哈基米",
             'happy': "开心！",
             'satisfied': "满意！",
             'surprised': "惊讶！",
@@ -757,7 +793,7 @@ class HajimiUI:
             'tired': "困倦...",
             'expressionless': "无语..."
         }
-        status = status_texts.get(self.hajimi.current_expression, "东海帝王")
+        status = status_texts.get(self.hajimi.current_expression, "哈基米")
         self.character_status_label.config(text=status)
     
     def on_volume_change(self, value):
@@ -766,23 +802,26 @@ class HajimiUI:
         self.hajimi.volume = volume / 100.0  # 转换为0-1范围
         
         # 更新音量标签
-        self.volume_label.config(text=f"音量: {volume}%")
+        if hasattr(self, 'volume_label'):
+            self.volume_label.config(text=f"音量: {volume}%")
         
-        # 更新音量指示器
-        if volume == 0:
-            self.volume_indicator.config(text="🔇", fg=self.colors['danger'])
-        elif volume < 30:
-            self.volume_indicator.config(text="🔉", fg=self.colors['warning'])
-        elif volume < 70:
-            self.volume_indicator.config(text="🔊", fg=self.colors['success'])
-        else:
-            self.volume_indicator.config(text="🔊", fg=self.colors['primary'])
+        # 更新音量指示器（安全检查）
+        if hasattr(self, 'volume_indicator'):
+            if volume == 0:
+                self.volume_indicator.config(text="🔇", fg=self.colors['danger'])
+            elif volume < 30:
+                self.volume_indicator.config(text="🔉", fg=self.colors['warning'])
+            elif volume < 70:
+                self.volume_indicator.config(text="🔊", fg=self.colors['success'])
+            else:
+                self.volume_indicator.config(text="🔊", fg=self.colors['primary'])
         
-        # 更新静音按钮状态
-        if volume == 0:
-            self.mute_button.config(text="🔇 静音", bg=self.colors['danger'])
-        else:
-            self.mute_button.config(text="🔇 静音", bg=self.colors['text_light'])
+        # 更新静音按钮状态（安全检查）
+        if hasattr(self, 'mute_button'):
+            if volume == 0:
+                self.mute_button.config(text="🔇", bg=self.colors['danger'])
+            else:
+                self.mute_button.config(text="🔇", bg=self.colors['text_light'])
     
     def toggle_mute(self):
         """切换静音状态"""
@@ -790,13 +829,13 @@ class HajimiUI:
             # 取消静音，恢复之前的音量
             self.hajimi.mute = False
             self.volume_scale.set(int(self.hajimi.volume * 100))
-            self.mute_button.config(text="🔇 静音", bg=self.colors['text_light'])
+            self.mute_button.config(text="🔇", bg=self.colors['text_light'])
             status = "有声"
         else:
             # 静音
             self.hajimi.mute = True
             self.volume_scale.set(0)
-            self.mute_button.config(text="🔊 取消静音", bg=self.colors['success'])
+            self.mute_button.config(text="🔊", bg=self.colors['success'])
             status = "静音"
         
         self.result_label.config(text=f"哈基米：{status}模式！")
@@ -825,7 +864,7 @@ class HajimiUI:
         
         # 更新角色状态文字
         status_texts = {
-            'default': "曼波",
+            'default': "哈基米",
             'happy': "开心！",
             'satisfied': "满意！",
             'surprised': "惊讶！",
@@ -835,16 +874,16 @@ class HajimiUI:
             'tired': "困倦...",
             'expressionless': "无语..."
         }
-        status = status_texts.get(self.hajimi.current_expression, "东海帝王")
+        status = status_texts.get(self.hajimi.current_expression, "哈基米")
         self.character_status_label.config(text=status)
 
     def open_bmr_window(self):
-        """打开BMR计算窗口"""
+        """打开BMR计算窗口 - 重新设计的简化版本"""
         win = tk.Toplevel(self.master)
-        win.title("基础代谢率计算 🏃‍♀️")
-        win.geometry("380x450")
+        win.title("🏥 哈基米健康数据计算器")
+        win.geometry("500x650")  # 增大窗口尺寸
         win.configure(bg=self.colors['background'])
-        win.resizable(False, False)
+        win.resizable(True, True)  # 允许调整大小
         
         # 设置窗口图标和居中
         try:
@@ -854,18 +893,21 @@ class HajimiUI:
         
         # 窗口居中
         win.update_idletasks()
-        x = (win.winfo_screenwidth() // 2) - (380 // 2)
-        y = (win.winfo_screenheight() // 2) - (450 // 2)
-        win.geometry(f"380x450+{x}+{y}")
+        x = (win.winfo_screenwidth() // 2) - (500 // 2)
+        y = (win.winfo_screenheight() // 2) - (650 // 2)
+        win.geometry(f"500x650+{x}+{y}")
+        
+        # 设置最小尺寸
+        win.minsize(450, 600)
         
         # 标题区域
         title_frame = tk.Frame(win, bg=self.colors['background'])
-        title_frame.pack(pady=25, padx=20, fill='x')
+        title_frame.pack(pady=20, padx=20, fill='x')
         
         title_label = tk.Label(
             title_frame, 
-            text="BMR 基础代谢率计算",
-            font=("微软雅黑", 18, "bold"),
+            text="🏥 健康数据计算器",
+            font=("微软雅黑", 20, "bold"),
             bg=self.colors['background'],
             fg=self.colors['primary']
         )
@@ -873,16 +915,16 @@ class HajimiUI:
         
         subtitle_label = tk.Label(
             title_frame,
-            text="💪 计算您的每日基础代谢需求",
-            font=("微软雅黑", 10),
+            text="💪 计算BMR基础代谢率 + BMI身体质量指数",
+            font=("微软雅黑", 11),
             bg=self.colors['background'],
             fg=self.colors['text_light']
         )
         subtitle_label.pack(pady=(5, 0))
         
-        # 输入框架 - 添加装饰边框
+        # 输入框架
         input_container = tk.Frame(win, bg=self.colors['background'])
-        input_container.pack(pady=20, padx=25, fill='x')
+        input_container.pack(pady=15, padx=25, fill='x')
         
         input_frame = tk.Frame(
             input_container, 
@@ -946,10 +988,10 @@ class HajimiUI:
         
         age_entry = tk.Entry(
             age_frame, 
-            font=("微软雅黑", 12), 
-            width=12,
+            font=("微软雅黑", 14), 
+            width=15,
             relief='solid',
-            bd=1,
+            bd=2,
             justify='right'
         )
         age_entry.pack(side='right')
@@ -969,10 +1011,10 @@ class HajimiUI:
         
         height_entry = tk.Entry(
             height_frame, 
-            font=("微软雅黑", 12), 
-            width=12,
+            font=("微软雅黑", 14), 
+            width=15,
             relief='solid',
-            bd=1,
+            bd=2,
             justify='right'
         )
         height_entry.pack(side='right')
@@ -992,32 +1034,13 @@ class HajimiUI:
         
         weight_entry = tk.Entry(
             weight_frame, 
-            font=("微软雅黑", 12), 
-            width=12,
+            font=("微软雅黑", 14), 
+            width=15,
             relief='solid',
-            bd=1,
+            bd=2,
             justify='right'
         )
         weight_entry.pack(side='right')
-        
-        # 计算按钮区域
-        button_frame = tk.Frame(win, bg=self.colors['background'])
-        button_frame.pack(pady=20)
-        
-        calc_btn = tk.Button(
-            button_frame, 
-            text="计算 BMR",
-            font=("微软雅黑", 14, "bold"),
-            bg=self.colors['primary'],
-            fg='#FFFFFF',
-            command=lambda: self.calc_bmr_in_window(win, gender_var, age_entry, height_entry, weight_entry, result_label),
-            width=18,
-            height=2,
-            relief='solid',
-            bd=1,
-            cursor='hand2'
-        )
-        calc_btn.pack()
         
         # 结果显示区域
         result_container = tk.Frame(win, bg=self.colors['background'])
@@ -1034,50 +1057,108 @@ class HajimiUI:
         
         result_label = tk.Label(
             result_frame,
-            text="请输入信息后点击计算",
-            font=("微软雅黑", 12),
+            text="📝 请填写个人信息，哈基米将为您计算健康数据",
+            font=("微软雅黑", 14),
             bg=self.colors['display_bg'],
             fg=self.colors['display_text'],
-            wraplength=280,
+            wraplength=400,
             justify='center'
         )
-        result_label.pack(pady=10)
+        result_label.pack(pady=15)
         
-        # 预设示例
+        # 简化的计算函数 - 直接在窗口内定义
+        def calculate_bmr_simple():
+            """简化的BMR计算函数"""
+            try:
+                print("=== BMR计算开始 ===")
+                
+                # 获取输入
+                gender = gender_var.get()
+                age_str = age_entry.get().strip()
+                height_str = height_entry.get().strip()
+                weight_str = weight_entry.get().strip()
+                
+                print(f"输入数据: 性别={gender}, 年龄={age_str}, 身高={height_str}, 体重={weight_str}")
+                
+                # 立即更新显示
+                result_label.config(text="🔍 哈基米正在分析您的健康数据...")
+                win.update()  # 强制更新界面
+                
+                # 验证输入
+                if not all([age_str, height_str, weight_str]):
+                    result_label.config(text="⚠️ 哈基米：请完整填写所有信息！\n💡 提示：年龄、身高、体重都要填写哦")
+                    return
+                
+                # 转换数据
+                try:
+                    age = float(age_str)
+                    height = float(height_str)
+                    weight = float(weight_str)
+                except ValueError:
+                    result_label.config(text="❌ 哈基米：请输入有效的数字！\n💡 提示：只能输入数字，不要包含文字")
+                    return
+                
+                print(f"转换后数据: 年龄={age}, 身高={height}, 体重={weight}")
+                
+                # 调用计算
+                result, msg = self.calc.calculate_bmr(gender, age, height, weight)
+                print(f"计算结果: result={result}, msg={msg}")
+                
+                # 显示结果
+                result_label.config(text=msg)
+                
+                # 更新角色表情
+                if result is not None:
+                    if result < 1300:
+                        self.hajimi.react_to_special('BMR_low')
+                    elif result < 1700:
+                        self.hajimi.react_to_special('BMR_normal')
+                    else:
+                        self.hajimi.react_to_special('BMR_high')
+                    self.update_character_display()
+                
+                print("=== BMR计算完成 ===")
+                
+            except Exception as e:
+                print(f"BMR计算异常: {e}")
+                result_label.config(text=f"😰 哈基米：计算出错了：{str(e)}\n💡 请检查输入的数据是否合理")
+                import traceback
+                traceback.print_exc()
+        
+        
+        # 按钮区域
+        button_frame = tk.Frame(win, bg=self.colors['background'])
+        button_frame.pack(pady=15)
+        
+        # 计算按钮
+        calc_btn = tk.Button(
+            button_frame, 
+            text="🏥 开始健康分析",
+            font=("微软雅黑", 16, "bold"),
+            bg=self.colors['primary'],
+            fg='#FFFFFF',
+            command=calculate_bmr_simple,
+            width=20,
+            height=3,
+            relief='solid',
+            bd=2,
+            cursor='hand2'
+        )
+        calc_btn.pack(pady=10)
+        
+        
+        # 示例提示
         example_frame = tk.Frame(win, bg=self.colors['background'])
         example_frame.pack(pady=(10, 20))
         
         example_label = tk.Label(
             example_frame,
-            text="💡 示例：男，25岁，175cm，70kg",
+            text="💡 示例数据：男，25岁，175cm，70kg\n📊 将得到：BMR≈1750kcal/天，BMI≈22.9(正常)",
             font=("微软雅黑", 10),
             bg=self.colors['background'],
-            fg=self.colors['text_light']
+            fg=self.colors['text_light'],
+            justify='center'
         )
         example_label.pack()
     
-    def calc_bmr_in_window(self, win, gender_var, age_entry, height_entry, weight_entry, result_label):
-        """在BMR窗口中执行计算"""
-        try:
-            gender = gender_var.get()
-            age = float(age_entry.get())
-            height = float(height_entry.get())
-            weight = float(weight_entry.get())
-            
-            result, msg = self.calc.calculate_bmr(gender, age, height, weight)
-            result_label.config(text=msg)
-            
-            # 根据BMR结果选择表情
-            if result < 1300:
-                self.hajimi.react_to_special('BMR_low')
-            elif result < 1700:
-                self.hajimi.react_to_special('BMR_normal')
-            else:
-                self.hajimi.react_to_special('BMR_high')
-            
-            # 更新主界面角色表情
-            self.update_character_display()
-        except ValueError:
-            result_label.config(text="哈基米：请输入有效的数字！")
-            self.hajimi.react_to_error("输入错误")
-            self.update_character_display()
+    

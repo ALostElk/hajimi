@@ -161,6 +161,43 @@ class Calculator:
         """
         self.angle_mode = (mode.lower() == 'deg')
     
+    def calculate_bmi(self, height: float, weight: float):
+        """
+        计算身体质量指数 (BMI - Body Mass Index)
+        
+        参数:
+            height: 身高（厘米）
+            weight: 体重（公斤）
+        
+        返回:
+            (bmi值, 描述信息)
+        """
+        try:
+            # BMI = 体重(kg) / 身高(m)²
+            height_m = height / 100  # 转换为米
+            bmi = weight / (height_m ** 2)
+            bmi_rounded = round(bmi, 1)
+            
+            # BMI分类
+            if bmi < 18.5:
+                category = "偏瘦"
+                advice = "哈基米：要注意营养均衡，适当增重哦～"
+            elif bmi < 24:
+                category = "正常"
+                advice = "哈基米：体重很健康，继续保持！💪"
+            elif bmi < 28:
+                category = "偏胖"
+                advice = "哈基米：可以适当控制饮食，多运动！🏃‍♀️"
+            else:
+                category = "肥胖"
+                advice = "哈基米：建议咨询医生，制定健康计划！🏥"
+            
+            msg = f"BMI = {bmi_rounded}\n分类: {category}\n\n{advice}"
+            return bmi, msg
+            
+        except Exception as e:
+            return None, f"哈基米：BMI计算出错了：{str(e)}"
+
     def calculate_bmr(self, gender: str, age: float, height: float, weight: float):
         """
         计算基础代谢率 (BMR - Basal Metabolic Rate)
@@ -180,13 +217,13 @@ class Calculator:
             height = float(height)
             weight = float(weight)
             
-            # 验证输入范围
-            if age <= 0 or age > 150:
-                return None, "哈基米：年龄数据不合理哦！"
-            if height <= 0 or height > 300:
-                return None, "哈基米：身高数据不合理哦！"
-            if weight <= 0 or weight > 500:
-                return None, "哈基米：体重数据不合理哦！"
+            # 验证输入范围 - 更宽松的检查
+            if age <= 0 or age > 120:
+                return None, "哈基米：年龄数据不合理哦！\n💡 提示：年龄应在1-120岁之间"
+            if height <= 0 or height > 250:
+                return None, "哈基米：身高数据不合理哦！\n💡 提示：身高应在1-250cm之间"
+            if weight <= 0 or weight > 300:
+                return None, "哈基米：体重数据不合理哦！\n💡 提示：体重应在1-300kg之间"
             
             # 使用 Harris-Benedict 修正公式计算 BMR
             if gender.upper() == 'M':
@@ -198,21 +235,33 @@ class Calculator:
             else:
                 return None, "哈基米：请选择正确的性别！"
             
+            # 计算BMI
+            bmi, bmi_msg = self.calculate_bmi(height, weight)
+            
             # 生成友好的反馈消息
             bmr_rounded = round(bmr, 1)
             
+            # BMR评估
             if bmr < 1200:
-                msg = f"BMR = {bmr_rounded} kcal/天\n\n哈基米：基础代谢偏低，要多注意营养哦～"
+                bmr_advice = "哈基米：基础代谢偏低，要多注意营养哦～"
                 level = "low"
             elif bmr < 1500:
-                msg = f"BMR = {bmr_rounded} kcal/天\n\n哈基米：代谢水平正常，保持健康生活方式！"
+                bmr_advice = "哈基米：代谢水平正常，保持健康生活方式！"
                 level = "normal"
             elif bmr < 1800:
-                msg = f"BMR = {bmr_rounded} kcal/天\n\n哈基米：代谢不错，继续保持！💪"
+                bmr_advice = "哈基米：代谢不错，继续保持！💪"
                 level = "good"
             else:
-                msg = f"BMR = {bmr_rounded} kcal/天\n\n哈基米：曼波！代谢率很高，身体躺平时都这么努力！🔥"
+                bmr_advice = "哈基米：曼波！代谢率很高，身体躺平时都这么努力！🔥"
                 level = "high"
+            
+            # 组合BMR和BMI信息
+            if bmi is not None:
+                msg = f"📊 健康数据报告\n\n"
+                msg += f"🔥 BMR = {bmr_rounded} kcal/天\n{bmr_advice}\n\n"
+                msg += f"⚖️ {bmi_msg}"
+            else:
+                msg = f"BMR = {bmr_rounded} kcal/天\n\n{bmr_advice}"
             
             return bmr, msg
             
@@ -257,6 +306,19 @@ if __name__ == "__main__":
             print(f"✓ {expr:20s} = {result}")
         else:
             print(f"✗ {expr:20s} : {msg}")
+    
+    print("\n" + "=" * 50)
+    print("BMI 测试")
+    print("=" * 50)
+    
+    # 测试BMI计算
+    bmi, bmi_msg = calc.calculate_bmi(175, 70)
+    print(f"\n身高175cm，体重70kg:")
+    print(bmi_msg)
+    
+    bmi, bmi_msg = calc.calculate_bmi(165, 55)
+    print(f"\n身高165cm，体重55kg:")
+    print(bmi_msg)
     
     print("\n" + "=" * 50)
     print("BMR 测试")
