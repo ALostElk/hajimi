@@ -16,6 +16,7 @@ class HajimiCharacter:
         # 加载音频文件列表，并验证文件
         self.sound_files = self.load_valid_sound_files()
         self.mute = False
+        self.volume = 0.5  # 默认音量50%
         
         # 表情映射
         self.expressions = {
@@ -94,13 +95,15 @@ class HajimiCharacter:
         return False
 
     def play_sound(self, filename):
-        """播放音效，带错误处理"""
-        if self.mute: 
+        """播放音效，带错误处理和音量控制"""
+        if self.mute or self.volume == 0: 
             return
         try:
             path = os.path.join(self.base_path, filename)
             if os.path.exists(path):
                 pygame.mixer.music.load(path)
+                # 设置音量
+                pygame.mixer.music.set_volume(self.volume)
                 pygame.mixer.music.play()
         except pygame.error as e:
             # 音频加载失败，静默处理
@@ -110,7 +113,7 @@ class HajimiCharacter:
 
     def play_random(self):
         """随机播放音效"""
-        if self.mute: 
+        if self.mute or self.volume == 0: 
             return
         if not self.sound_files:
             return
@@ -172,7 +175,9 @@ class HajimiCharacter:
             'BMR_normal': 'satisfied', 
             'BMR_high': 'happy',
             'mute_on': 'expressionless',
-            'mute_off': 'happy'
+            'mute_off': 'happy',
+            'ai_on': 'happy',
+            'ai_off': 'expressionless'
         }
         expression = reactions.get(special_type, 'default')
         self.set_expression(expression)

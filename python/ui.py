@@ -42,6 +42,7 @@ class HajimiUI:
         # 创建界面布局
         self.create_title()
         self.create_display_area()
+        self.create_sound_control()
         self.create_button_areas()
         
         # 绑定键盘事件
@@ -92,7 +93,7 @@ class HajimiUI:
         
         # 输入显示区域装饰
         input_container = tk.Frame(display_frame, bg=self.colors['display_bg'])
-        input_container.pack(fill='x', padx=15, pady=(15, 5))
+        input_container.pack(fill='x', padx=15, pady=10)
         
         # 输入标签
         input_title = tk.Label(
@@ -114,7 +115,7 @@ class HajimiUI:
             anchor='e',
             height=1
         )
-        self.input_label.pack(fill='x', pady=(2, 0))
+        self.input_label.pack(fill='x', pady=2)
         
         # 分隔线
         separator = tk.Frame(display_frame, height=1, bg=self.colors['border'])
@@ -122,7 +123,7 @@ class HajimiUI:
         
         # 计算结果区域
         calc_result_container = tk.Frame(display_frame, bg=self.colors['display_bg'])
-        calc_result_container.pack(fill='x', padx=15, pady=(5, 5))
+        calc_result_container.pack(fill='x', padx=15, pady=5)
         
         # 计算结果标签
         calc_result_title = tk.Label(
@@ -144,11 +145,11 @@ class HajimiUI:
             anchor='e',
             height=1
         )
-        self.calc_result_label.pack(fill='x', pady=(2, 0))
+        self.calc_result_label.pack(fill='x', pady=2)
         
         # 哈基米评论区域
         comment_container = tk.Frame(display_frame, bg=self.colors['display_bg'])
-        comment_container.pack(fill='x', padx=15, pady=(5, 15))
+        comment_container.pack(fill='x', padx=15, pady=10)
         
         # 哈基米评论标签
         comment_title = tk.Label(
@@ -170,7 +171,7 @@ class HajimiUI:
             anchor='e',
             height=1
         )
-        self.result_label.pack(fill='x', pady=(2, 0))
+        self.result_label.pack(fill='x', pady=2)
         
         # 右侧：角色表情区域 - 美化设计
         character_frame = tk.Frame(
@@ -191,7 +192,7 @@ class HajimiUI:
             bg=self.colors['display_bg'],
             fg=self.colors['text_light']
         )
-        character_title.pack(pady=(10, 5))
+        character_title.pack(pady=10)
         
         # 角色表情标签
         self.character_label = tk.Label(
@@ -209,8 +210,81 @@ class HajimiUI:
             bg=self.colors['display_bg'],
             fg=self.colors['primary']
         )
-        self.character_status_label.pack(pady=(5, 15))
+        self.character_status_label.pack(pady=10)
     
+    def create_sound_control(self):
+        """创建声音控制面板"""
+        # 声音控制容器
+        sound_frame = tk.Frame(self.master, bg=self.colors['background'])
+        sound_frame.pack(pady=5, padx=20, fill='x')
+        
+        # 声音控制标题
+        sound_title = tk.Label(
+            sound_frame,
+            text="🔊 声音控制",
+            font=("微软雅黑", 10, "bold"),
+            bg=self.colors['background'],
+            fg=self.colors['primary']
+        )
+        sound_title.pack(side='left', padx=(0, 10))
+        
+        # 音量滑块容器
+        volume_container = tk.Frame(sound_frame, bg=self.colors['background'])
+        volume_container.pack(side='left', padx=10)
+        
+        # 音量标签
+        self.volume_label = tk.Label(
+            volume_container,
+            text="音量: 50%",
+            font=("微软雅黑", 9),
+            bg=self.colors['background'],
+            fg=self.colors['text']
+        )
+        self.volume_label.pack()
+        
+        # 音量滑块
+        self.volume_scale = tk.Scale(
+            volume_container,
+            from_=0,
+            to=100,
+            orient='horizontal',
+            length=120,
+            resolution=10,
+            bg=self.colors['background'],
+            fg=self.colors['text'],
+            highlightthickness=0,
+            troughcolor=self.colors['secondary_light'],
+            activebackground=self.colors['secondary'],
+            command=self.on_volume_change
+        )
+        self.volume_scale.set(50)  # 默认音量50%
+        self.volume_scale.pack()
+        
+        # 静音按钮
+        self.mute_button = tk.Button(
+            volume_container,
+            text="🔇 静音",
+            font=("微软雅黑", 9, "bold"),
+            bg=self.colors['text_light'],
+            fg='#FFFFFF',
+            relief='flat',
+            bd=0,
+            padx=10,
+            pady=2,
+            command=self.toggle_mute,
+            cursor='hand2'
+        )
+        self.mute_button.pack(pady=(5, 0))
+        
+        # 音量指示器
+        self.volume_indicator = tk.Label(
+            sound_frame,
+            text="🔊",
+            font=("微软雅黑", 14),
+            bg=self.colors['background'],
+            fg=self.colors['success']
+        )
+        self.volume_indicator.pack(side='right', padx=10)
     
     def create_button_areas(self):
         """创建按钮区域"""
@@ -291,7 +365,7 @@ class HajimiUI:
             # 第七行：其他科学函数
             ['tan(', 'sqrt(', 'ln(', 'lg('],
             # 第八行：常量和特殊功能
-            ['pi', 'e', 'BMR', '静音']
+            ['pi', 'e', 'BMR', 'AI开关']
         ]
 
         for r, row in enumerate(buttons):
@@ -313,6 +387,8 @@ class HajimiUI:
             return 'bmr'
         elif text in ['sin(', 'cos(', 'tan(', 'sqrt(', 'ln(', 'lg(', 'pi', 'e']:
             return 'function'
+        elif text == 'AI开关':
+            return 'ai_control'
         else:  # AC, ⌫, Del, 静音
             return 'control'
     
@@ -354,6 +430,12 @@ class HajimiUI:
                 'bg': self.colors['text_light'], 
                 'fg': '#FFFFFF',
                 'activebackground': self.colors['text'],
+                'activeforeground': '#FFFFFF'
+            },
+            'ai_control': {
+                'bg': self.colors['accent'], 
+                'fg': '#FFFFFF',
+                'activebackground': self.colors['accent_light'],
                 'activeforeground': '#FFFFFF'
             }
         }
@@ -447,6 +529,10 @@ class HajimiUI:
             self.toggle_mute()
             return
 
+        if val == "AI开关":
+            self.toggle_ai()
+            return
+
         # 添加输入到显示区域
         self.add_input(val)
         self.hajimi.play_random()
@@ -499,7 +585,12 @@ class HajimiUI:
         # 小数点验证
         if new_val == '.':
             # 检查是否已经有小数点
-            if '.' in current.split('+')[-1].split('-')[-1].split('*')[-1].split('/')[-1]:
+            # 需要处理所有运算符，包括×和÷
+            last_operand = current
+            for op in ['+', '-', '*', '/', '×', '÷']:
+                if op in last_operand:
+                    last_operand = last_operand.split(op)[-1]
+            if '.' in last_operand:
                 return False
         
         # 运算符验证
@@ -539,7 +630,8 @@ class HajimiUI:
         
         # 执行计算
         result, msg = self.calc.evaluate(expr)
-        ai_response = self.ai.comment(result, msg)
+        # 使用动态AI生成评论
+        ai_response = self.ai.generate_dynamic_comment(result, msg, self.hajimi.current_expression)
         
         # 更新显示
         self.update_display(result, ai_response, msg)
@@ -668,15 +760,62 @@ class HajimiUI:
         status = status_texts.get(self.hajimi.current_expression, "东海帝王")
         self.character_status_label.config(text=status)
     
+    def on_volume_change(self, value):
+        """音量滑块变化事件"""
+        volume = int(value)
+        self.hajimi.volume = volume / 100.0  # 转换为0-1范围
+        
+        # 更新音量标签
+        self.volume_label.config(text=f"音量: {volume}%")
+        
+        # 更新音量指示器
+        if volume == 0:
+            self.volume_indicator.config(text="🔇", fg=self.colors['danger'])
+        elif volume < 30:
+            self.volume_indicator.config(text="🔉", fg=self.colors['warning'])
+        elif volume < 70:
+            self.volume_indicator.config(text="🔊", fg=self.colors['success'])
+        else:
+            self.volume_indicator.config(text="🔊", fg=self.colors['primary'])
+        
+        # 更新静音按钮状态
+        if volume == 0:
+            self.mute_button.config(text="🔇 静音", bg=self.colors['danger'])
+        else:
+            self.mute_button.config(text="🔇 静音", bg=self.colors['text_light'])
+    
     def toggle_mute(self):
         """切换静音状态"""
-        self.hajimi.mute = not self.hajimi.mute
-        status = "静音" if self.hajimi.mute else "有声"
+        if self.hajimi.mute:
+            # 取消静音，恢复之前的音量
+            self.hajimi.mute = False
+            self.volume_scale.set(int(self.hajimi.volume * 100))
+            self.mute_button.config(text="🔇 静音", bg=self.colors['text_light'])
+            status = "有声"
+        else:
+            # 静音
+            self.hajimi.mute = True
+            self.volume_scale.set(0)
+            self.mute_button.config(text="🔊 取消静音", bg=self.colors['success'])
+            status = "静音"
+        
         self.result_label.config(text=f"哈基米：{status}模式！")
         
         # 更新角色表情
         special_type = 'mute_on' if self.hajimi.mute else 'mute_off'
         self.hajimi.react_to_special(special_type)
+        self.update_character_display()
+
+    def toggle_ai(self):
+        """切换AI生成状态"""
+        ai_response = self.ai.toggle_ai()
+        self.result_label.config(text=ai_response)
+        
+        # 更新角色表情
+        if self.ai.ai_enabled:
+            self.hajimi.react_to_special('ai_on')
+        else:
+            self.hajimi.react_to_special('ai_off')
         self.update_character_display()
     
     def update_character_display(self):

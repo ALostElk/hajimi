@@ -1,6 +1,6 @@
 # 哈基米计算器 🐱
 
-一款基于东海帝王曼波形象开发的趣味科学计算器，集成了强大的计算功能、可爱的角色表情和丰富的音效反馈。
+一款基于东海帝王哈基米形象开发的趣味科学计算器，集成了强大的计算功能、可爱的角色表情和丰富的音效反馈。
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.7+-green.svg)
