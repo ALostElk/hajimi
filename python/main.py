@@ -17,7 +17,7 @@ try:
         # 创建主窗口 - 优化尺寸和布局
         root = tk.Tk()
         root.title("哈基米计算器")
-        root.geometry("520x750")  # 稍微增加高度以适应新的布局
+        root.geometry("520x750")  # 标准尺寸
         root.resizable(True, True)
         
         # 设置窗口最小尺寸

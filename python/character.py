@@ -7,6 +7,8 @@ class HajimiCharacter:
     def __init__(self):
         try:
             pygame.mixer.init()
+            # 设置同时播放的音频通道数
+            pygame.mixer.set_num_channels(8)
         except Exception as e:
             print(f"音频系统初始化失败: {e}")
         
@@ -17,6 +19,10 @@ class HajimiCharacter:
         self.sound_files = self.load_valid_sound_files()
         self.mute = False
         self.volume = 0.5  # 默认音量50%
+        
+        # 音效缓存
+        self.sound_cache = {}
+        self.preload_common_sounds()
         
         # 表情映射
         self.expressions = {
@@ -68,6 +74,53 @@ class HajimiCharacter:
         
         return valid_files
 
+    def preload_common_sounds(self):
+        """预加载常用音效到内存"""
+        print("正在预加载音效...")
+        try:
+            # 预加载数字音效
+            number_sounds = {
+                '0': '哈.wav',
+                '1': '曼波（干脆.低.wav',
+                '2': '曼波（可爱.低.wav',
+                '3': '曼波↑.低.wav',
+                '4': '曼波（干脆.中.wav',
+                '5': '曼波（可爱.中.wav',
+                '6': '曼波↑.中.wav',
+                '7': '曼波（干脆.高.wav',
+                '8': '曼波（可爱.高.wav',
+                '9': '曼波↑.高.wav'
+            }
+            
+            for num, filename in number_sounds.items():
+                self._load_sound_to_cache(filename)
+            
+            # 预加载功能音效
+            operator_sounds = ['曼波.低.wav', '曼波.中.wav', '曼波.高.wav']
+            for filename in operator_sounds:
+                self._load_sound_to_cache(filename)
+            
+            # 预加载成功/失败音效
+            result_sounds = [
+                '曼波欧耶.wav', '曼波wow.wav', '帝皇私人笑声.wav',
+                '曼波duang.wav', '曼波啊米诺斯.wav', '曼波我嘞个豆.wav'
+            ]
+            for filename in result_sounds:
+                self._load_sound_to_cache(filename)
+            
+            print(f"音效预加载完成！共加载 {len(self.sound_cache)} 个音效")
+        except Exception as e:
+            print(f"预加载音效失败: {e}")
+    
+    def _load_sound_to_cache(self, filename):
+        """加载单个音效到缓存"""
+        try:
+            path = os.path.join(self.base_path, filename)
+            if os.path.exists(path):
+                self.sound_cache[filename] = pygame.mixer.Sound(path)
+        except Exception as e:
+            print(f"加载音效 {filename} 失败: {e}")
+
     def load_expressions(self):
         """加载表情图片"""
         try:
@@ -95,18 +148,23 @@ class HajimiCharacter:
         return False
 
     def play_sound(self, filename):
-        """播放音效，带错误处理和音量控制"""
+        """播放音效，优先使用缓存，带错误处理和音量控制"""
         if self.mute or self.volume == 0: 
             return
         try:
-            path = os.path.join(self.base_path, filename)
-            if os.path.exists(path):
-                pygame.mixer.music.load(path)
-                # 设置音量
-                pygame.mixer.music.set_volume(self.volume)
-                pygame.mixer.music.play()
+            # 优先使用缓存的音效
+            if filename in self.sound_cache:
+                sound = self.sound_cache[filename]
+                sound.set_volume(self.volume)
+                sound.play()
+            else:
+                # 缓存中没有，使用旧方法
+                path = os.path.join(self.base_path, filename)
+                if os.path.exists(path):
+                    pygame.mixer.music.load(path)
+                    pygame.mixer.music.set_volume(self.volume)
+                    pygame.mixer.music.play()
         except pygame.error as e:
-            # 音频加载失败，静默处理
             print(f"音频加载失败: {filename} - {e}")
         except Exception as e:
             print(f"播放音效时出错: {filename} - {e}")
@@ -122,42 +180,97 @@ class HajimiCharacter:
             self.play_sound(file)
         except Exception as e:
             print(f"随机播放音效失败: {e}")
+    
+    def play_number_sound(self, number):
+        """播放数字按键对应的音效"""
+        if self.mute or self.volume == 0:
+            return
+        
+        # 数字按键音效映射
+        number_sounds = {
+            '0': '哈.wav',
+            '1': '曼波（干脆.低.wav',
+            '2': '曼波（可爱.低.wav',
+            '3': '曼波↑.低.wav',
+            '4': '曼波（干脆.中.wav',
+            '5': '曼波（可爱.中.wav',
+            '6': '曼波↑.中.wav',
+            '7': '曼波（干脆.高.wav',
+            '8': '曼波（可爱.高.wav',
+            '9': '曼波↑.高.wav'
+        }
+        
+        sound_file = number_sounds.get(number)
+        if sound_file:
+            self.play_sound(sound_file)
+    
+    def play_operator_sound(self):
+        """播放功能按键对应的音效（随机）"""
+        if self.mute or self.volume == 0:
+            return
+        
+        # 功能按键随机音效
+        operator_sounds = ['曼波.低.wav', '曼波.中.wav', '曼波.高.wav']
+        sound_file = random.choice(operator_sounds)
+        self.play_sound(sound_file)
+    
+    def play_success_sound(self):
+        """播放计算成功的音效（随机）"""
+        if self.mute or self.volume == 0:
+            return
+        
+        # 成功音效
+        success_sounds = ['曼波欧耶.wav', '曼波wow.wav', '帝皇私人笑声.wav']
+        sound_file = random.choice(success_sounds)
+        self.play_sound(sound_file)
+    
+    def play_error_sound(self):
+        """播放计算错误的音效（随机）"""
+        if self.mute or self.volume == 0:
+            return
+        
+        # 错误音效
+        error_sounds = ['曼波duang.wav', '曼波啊米诺斯.wav', '曼波我嘞个豆.wav']
+        sound_file = random.choice(error_sounds)
+        self.play_sound(sound_file)
 
     def react(self, result):
         """根据计算结果选择表情和音效"""
         # 根据结果选择表情（不受静音影响）
         if result is None:
             self.set_expression('expressionless')
-            if not self.mute:
-                self.play_sound("曼波啊米诺斯.mp3")
-        elif result == 0:
-            self.set_expression('happy')
-            if not self.mute:
-                self.play_sound("曼波.mp3")
-        elif isinstance(result, (int, float)) and result < 0:
-            self.set_expression('sad')
-            if not self.mute:
-                self.play_sound("曼波傻笑.mp3")
-        elif isinstance(result, (int, float)) and abs(result) > 1e6:
-            self.set_expression('surprised')
-            if not self.mute:
-                self.play_sound("曼波哈基米.mp3")
+            # 错误音效在calculate方法中处理
         elif result == 520:
+            # 彩蛋：520
             self.set_expression('happy')
             if not self.mute:
-                self.play_sound("曼波哈基米.mp3")
+                self.play_sound("曼波欧耶.wav")
         elif result == 2333:
+            # 彩蛋：2333
             self.set_expression('satisfied')
             if not self.mute:
-                self.play_sound("曼波欧耶.mp3")
+                self.play_sound("曼波欧耶.wav")
         elif result == 114514:
+            # 彩蛋：114514
             self.set_expression('furious')
             if not self.mute:
-                self.play_sound("曼波啊米诺斯.mp3")
+                self.play_sound("曼波啊米诺斯.wav")
+        elif result == 0:
+            self.set_expression('happy')
+            # 普通成功音效
+            self.play_success_sound()
+        elif isinstance(result, (int, float)) and result < 0:
+            self.set_expression('sad')
+            # 普通成功音效
+            self.play_success_sound()
+        elif isinstance(result, (int, float)) and abs(result) > 1e6:
+            self.set_expression('surprised')
+            # 普通成功音效
+            self.play_success_sound()
         else:
             self.set_expression('satisfied')
-            if not self.mute:
-                self.play_random()
+            # 普通成功音效
+            self.play_success_sound()
 
     def react_to_error(self, error_msg):
         """对错误消息的反应"""

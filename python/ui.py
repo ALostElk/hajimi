@@ -18,6 +18,10 @@ class HajimiUI:
         
         self.hajimi = HajimiCharacter()
         self.ai = HajimiAI()
+        
+        # 计算历史记录 (最多保存10条)
+        self.calc_history = []
+        self.max_history = 10
 
         # 哈基米主题色彩 - 双色调圆润配色
         self.colors = {
@@ -36,8 +40,8 @@ class HajimiUI:
             'accent_light': '#8CC8FF', # 浅天蓝色
             
             # 基础色
-            'background': '#FDFCFB',   # 温暖背景
-            'background_dark': '#F5F3F0', # 深灰背景
+            'background': '#FFF0F5',   # 浅粉色背景
+            'background_dark': '#FFE5EC', # 浅粉色背景
             'text': '#3A3A3A',         # 深色文字
             'text_light': '#8A8A8A',   # 浅灰文字
             'button_normal': '#FFFFFF', # 白色按钮
@@ -63,20 +67,193 @@ class HajimiUI:
         self.bind_keyboard_events()
     
     def create_title(self):
-        """创建标题区域"""
-        # 标题容器框架，添加阴影效果
-        title_frame = tk.Frame(self.master, bg=self.colors['background'])
-        title_frame.pack(pady=(15, 10))
+        """创建标题区域 - 趣味版"""
+        # 标题容器框架
+        title_frame = tk.Frame(
+            self.master, 
+            bg=self.colors['primary_light'],
+            relief='raised',
+            bd=3
+        )
+        title_frame.pack(pady=(10, 5), padx=20, fill='x')
+        
+        # 顶部emoji装饰行
+        emoji_top = tk.Label(
+            title_frame, 
+            text="✨ 🐱 ✨", 
+            font=("微软雅黑", 16),
+            bg=self.colors['primary_light'],
+            fg=self.colors['primary_dark']
+        )
+        emoji_top.pack(pady=(8, 0))
         
         # 主标题
         title_label = tk.Label(
             title_frame, 
-            text="哈基米计算器", 
-            font=("微软雅黑", 22, "bold"),
-            bg=self.colors['background'],
-            fg=self.colors['primary']
+            text="哈基米趣味计算器", 
+            font=("微软雅黑", 24, "bold"),
+            bg=self.colors['primary_light'],
+            fg='#FFFFFF'
         )
-        title_label.pack()
+        title_label.pack(pady=(2, 0))
+        
+        # 副标题
+        subtitle_label = tk.Label(
+            title_frame, 
+            text="让数学变得更有趣 ～(˘▾˘～)", 
+            font=("微软雅黑", 11),
+            bg=self.colors['primary_light'],
+            fg=self.colors['primary_dark']
+        )
+        subtitle_label.pack(pady=(0, 8))
+    
+    def create_cat_ears(self):
+        """创建可爱的猫猫装饰（耳朵+脸）"""
+        # 猫猫装饰容器
+        cat_frame = tk.Frame(self.master, bg=self.colors['background'], height=120)
+        cat_frame.pack(pady=(10, 0), fill='x')
+        
+        # 创建Canvas来绘制猫猫
+        canvas = tk.Canvas(
+            cat_frame, 
+            width=520, 
+            height=120, 
+            bg=self.colors['background'],
+            highlightthickness=0
+        )
+        canvas.pack()
+        
+        # === 绘制猫耳朵 ===
+        # 左耳朵（更尖锐的三角形）
+        left_ear_x = 150
+        left_ear_y = 15
+        canvas.create_polygon(
+            left_ear_x, left_ear_y + 35,      # 底部左
+            left_ear_x + 50, left_ear_y + 35, # 底部右
+            left_ear_x + 25, left_ear_y,      # 顶部尖
+            fill='#FF8FA3', 
+            outline='#C55A78',
+            width=3,
+            smooth=False
+        )
+        # 左耳朵内部粉色
+        canvas.create_polygon(
+            left_ear_x + 12, left_ear_y + 30,
+            left_ear_x + 38, left_ear_y + 30,
+            left_ear_x + 25, left_ear_y + 12,
+            fill='#FFB3C6',
+            outline=''
+        )
+        
+        # 右耳朵（更尖锐的三角形）
+        right_ear_x = 320
+        canvas.create_polygon(
+            right_ear_x, left_ear_y + 35,
+            right_ear_x + 50, left_ear_y + 35,
+            right_ear_x + 25, left_ear_y,
+            fill='#FF8FA3',
+            outline='#C55A78',
+            width=3,
+            smooth=False
+        )
+        # 右耳朵内部粉色
+        canvas.create_polygon(
+            right_ear_x + 12, left_ear_y + 30,
+            right_ear_x + 38, left_ear_y + 30,
+            right_ear_x + 25, left_ear_y + 12,
+            fill='#FFB3C6',
+            outline=''
+        )
+        
+        # === 绘制猫脸 ===
+        face_center_x = 260
+        face_y = 65
+        
+        # 左眼睛
+        canvas.create_oval(
+            face_center_x - 30, face_y,
+            face_center_x - 18, face_y + 12,
+            fill='#5C3D5C',
+            outline=''
+        )
+        
+        # 右眼睛
+        canvas.create_oval(
+            face_center_x + 18, face_y,
+            face_center_x + 30, face_y + 12,
+            fill='#5C3D5C',
+            outline=''
+        )
+        
+        # 鼻子（小三角形）
+        canvas.create_polygon(
+            face_center_x - 3, face_y + 20,
+            face_center_x + 3, face_y + 20,
+            face_center_x, face_y + 25,
+            fill='#8B4789',
+            outline=''
+        )
+        
+        # ω 嘴巴（使用贝塞尔曲线模拟）
+        # 左半边嘴巴
+        canvas.create_arc(
+            face_center_x - 20, face_y + 22,
+            face_center_x - 2, face_y + 35,
+            start=180, extent=90,
+            outline='#8B4789',
+            width=2,
+            style='arc'
+        )
+        # 右半边嘴巴
+        canvas.create_arc(
+            face_center_x + 2, face_y + 22,
+            face_center_x + 20, face_y + 35,
+            start=270, extent=90,
+            outline='#8B4789',
+            width=2,
+            style='arc'
+        )
+        # 中间连接
+        canvas.create_line(
+            face_center_x - 2, face_y + 28,
+            face_center_x + 2, face_y + 28,
+            fill='#8B4789',
+            width=2
+        )
+        
+        # 左边胡须
+        for i in range(3):
+            y_offset = face_y + 15 + i * 6
+            canvas.create_line(
+                face_center_x - 35, y_offset,
+                face_center_x - 50, y_offset - 3 + i * 2,
+                fill='#C55A78',
+                width=2
+            )
+        
+        # 右边胡须
+        for i in range(3):
+            y_offset = face_y + 15 + i * 6
+            canvas.create_line(
+                face_center_x + 35, y_offset,
+                face_center_x + 50, y_offset - 3 + i * 2,
+                fill='#C55A78',
+                width=2
+            )
+        
+        # 腮红（可选）
+        canvas.create_oval(
+            face_center_x - 45, face_y + 18,
+            face_center_x - 32, face_y + 28,
+            fill='#FFD1DC',
+            outline=''
+        )
+        canvas.create_oval(
+            face_center_x + 32, face_y + 18,
+            face_center_x + 45, face_y + 28,
+            fill='#FFD1DC',
+            outline=''
+        )
         
     def create_display_area(self):
         """创建圆润美观的显示区域"""
@@ -84,16 +261,16 @@ class HajimiUI:
         main_display_frame = tk.Frame(self.master, bg=self.colors['background'])
         main_display_frame.pack(pady=20, padx=30, fill='x')
         
-        # 左侧：计算显示区域 - 更柔和的边框
+        # 左侧：计算显示区域 - 趣味粉色边框
         display_frame = tk.Frame(
             main_display_frame, 
-            bg=self.colors['display_bg'], 
-            relief='solid', 
-            bd=1,
-            highlightbackground=self.colors['border'],
-            highlightthickness=1
+            bg='#2D3748',  # 深色背景
+            relief='groove', 
+            bd=4,
+            highlightbackground=self.colors['primary'],
+            highlightthickness=3
         )
-        display_frame.pack(side='left', fill='both', expand=True, padx=(0, 20))
+        display_frame.pack(side='left', fill='both', expand=True, padx=(0, 15))
         
         # 输入显示区域装饰
         input_container = tk.Frame(display_frame, bg=self.colors['display_bg'])
@@ -113,7 +290,7 @@ class HajimiUI:
         self.input_label = tk.Label(
             input_container,
             text="",
-            font=("Consolas", 18, "bold"),
+            font=("Consolas", 20, "bold"),
             bg=self.colors['display_bg'],
             fg='#E9ECEF',
             anchor='e',
@@ -139,17 +316,21 @@ class HajimiUI:
         )
         calc_result_title.pack(anchor='w')
         
+        # 结果行容器
+        result_row = tk.Frame(calc_result_container, bg=self.colors['display_bg'])
+        result_row.pack(fill='x', pady=2)
+        
         # 计算结果显示
         self.calc_result_label = tk.Label(
-            calc_result_container,
+            result_row,
             text="",
-            font=("Consolas", 16, "bold"),
+            font=("Consolas", 18, "bold"),
             bg=self.colors['display_bg'],
-            fg='#E9ECEF',
+            fg='#FFD700',  # 金色更醒目
             anchor='e',
             height=1
         )
-        self.calc_result_label.pack(fill='x', pady=2)
+        self.calc_result_label.pack(side='left', fill='x', expand=True, padx=10)
         
         # 哈基米评论区域
         comment_container = tk.Frame(display_frame, bg=self.colors['display_bg'])
@@ -177,116 +358,223 @@ class HajimiUI:
         )
         self.result_label.pack(fill='x', pady=2)
         
-        # 右侧：角色表情区域 - 更圆润的设计
+        # 右侧：角色表情区域 - 趣味粉色边框
         character_frame = tk.Frame(
             main_display_frame, 
-            bg=self.colors['display_bg'], 
-            relief='solid', 
-            bd=1,
-            highlightbackground=self.colors['border'],
-            highlightthickness=1
+            bg='#FFE5EC',  # 浅粉色背景
+            relief='groove', 
+            bd=4,
+            highlightbackground=self.colors['primary'],
+            highlightthickness=3
         )
-        character_frame.pack(side='right', fill='y', ipadx=15, ipady=10)
+        character_frame.pack(side='right', fill='y', ipadx=10, ipady=10)
         
-        # 角色标题
+        # 角色标题 - 更可爱的样式
         character_title = tk.Label(
             character_frame,
-            text="哈基米状态",
-            font=("微软雅黑", 9),
-            bg=self.colors['display_bg'],
-            fg=self.colors['text_light']
+            text="😺 哈基米表情 😺",
+            font=("微软雅黑", 10, "bold"),
+            bg='#FFE5EC',
+            fg=self.colors['primary_dark']
         )
-        character_title.pack(pady=10)
+        character_title.pack(pady=8)
         
         # 角色表情标签
         self.character_label = tk.Label(
             character_frame,
             image=self.hajimi.get_expression('default'),
-            bg=self.colors['display_bg']
+            bg='#FFE5EC'
         )
         self.character_label.pack(pady=5)
         
-        # 角色状态标签
+        # 角色状态标签 - 更醒目
         self.character_status_label = tk.Label(
             character_frame,
             text="哈基米",
-            font=("微软雅黑", 11, "bold"),
-            bg=self.colors['display_bg'],
+            font=("微软雅黑", 12, "bold"),
+            bg='#FFE5EC',
             fg=self.colors['primary']
         )
-        self.character_status_label.pack(pady=10)
+        self.character_status_label.pack(pady=8)
+    
+    def create_cat_slider(self, parent):
+        """创建可爱的猫猫滑动条"""
+        # 当前音量值
+        self.current_volume = 50
+        
+        # 滑动条画布
+        self.slider_canvas = tk.Canvas(
+            parent,
+            width=120,
+            height=30,
+            bg='#FFF0F5',
+            highlightthickness=0
+        )
+        self.slider_canvas.pack()
+        
+        # 绘制滑动轨道
+        self.slider_track = self.slider_canvas.create_rectangle(
+            10, 12, 110, 18,
+            fill='#FFD1DC',
+            outline='#FFB3C6',
+            width=2
+        )
+        
+        # 绘制进度条
+        self.slider_progress = self.slider_canvas.create_rectangle(
+            10, 12, 60, 18,
+            fill='#FF8FA3',
+            outline=''
+        )
+        
+        # 创建猫猫滑块（使用emoji）
+        self.slider_cat = self.slider_canvas.create_text(
+            60, 15,
+            text='😺',
+            font=('Arial', 16),
+            anchor='center'
+        )
+        
+        # 绑定鼠标事件
+        self.slider_canvas.bind('<Button-1>', self.on_slider_click)
+        self.slider_canvas.bind('<B1-Motion>', self.on_slider_drag)
+        
+        # 存储滑块位置范围
+        self.slider_min_x = 10
+        self.slider_max_x = 110
+    
+    def on_slider_click(self, event):
+        """点击滑动条"""
+        self.update_slider_position(event.x)
+    
+    def on_slider_drag(self, event):
+        """拖动滑动条"""
+        self.update_slider_position(event.x)
+    
+    def update_slider_position(self, x):
+        """更新滑块位置"""
+        # 限制在有效范围内
+        x = max(self.slider_min_x, min(x, self.slider_max_x))
+        
+        # 更新猫猫滑块位置
+        self.slider_canvas.coords(self.slider_cat, x, 15)
+        
+        # 更新进度条
+        self.slider_canvas.coords(self.slider_progress, 10, 12, x, 18)
+        
+        # 计算音量值 (0-100)
+        volume_range = self.slider_max_x - self.slider_min_x
+        volume = int((x - self.slider_min_x) / volume_range * 100)
+        
+        # 音量以10为步进
+        volume = (volume // 10) * 10
+        
+        if volume != self.current_volume:
+            self.current_volume = volume
+            self.on_volume_change(volume)
     
     def create_sound_control(self):
-        """创建紧凑的声音控制面板"""
-        # 声音控制容器 - 紧凑设计
-        sound_frame = tk.Frame(self.master, bg=self.colors['background'])
-        sound_frame.pack(pady=8, padx=20, fill='x')
+        """创建趣味声音控制面板"""
+        # 声音控制容器 - 可爱粉色边框
+        sound_frame = tk.Frame(
+            self.master, 
+            bg='#FFF0F5',
+            relief='raised',
+            bd=2
+        )
+        sound_frame.pack(pady=10, padx=20, fill='x')
         
         # 左侧：音量滑块和标签
-        left_frame = tk.Frame(sound_frame, bg=self.colors['background'])
-        left_frame.pack(side='left', fill='x', expand=True)
+        left_frame = tk.Frame(sound_frame, bg='#FFF0F5')
+        left_frame.pack(side='left', fill='x', expand=True, padx=10, pady=5)
         
         # 音量标签和滑块在同一行
-        volume_row = tk.Frame(left_frame, bg=self.colors['background'])
+        volume_row = tk.Frame(left_frame, bg='#FFF0F5')
         volume_row.pack(fill='x')
         
-        # 音量标签
+        # 音量标签 - 添加emoji
         self.volume_label = tk.Label(
             volume_row,
-            text="音量: 50%",
-            font=("微软雅黑", 9),
-            bg=self.colors['background'],
-            fg=self.colors['text']
+            text="🔊 音量: 50%",
+            font=("微软雅黑", 10, "bold"),
+            bg='#FFF0F5',
+            fg=self.colors['primary_dark']
         )
         self.volume_label.pack(side='left', padx=(0, 8))
         
-        # 音量滑块 - 更紧凑
-        self.volume_scale = tk.Scale(
-            volume_row,
-            from_=0,
-            to=100,
-            orient='horizontal',
-            length=100,
-            resolution=10,
-            bg=self.colors['background'],
-            fg=self.colors['text'],
-            highlightthickness=0,
-            troughcolor=self.colors['secondary_light'],
-            activebackground=self.colors['secondary'],
-            command=self.on_volume_change
-        )
-        self.volume_scale.set(50)  # 默认音量50%
-        self.volume_scale.pack(side='left', padx=(0, 10))
+        # 创建自定义的猫猫滑动条
+        slider_container = tk.Frame(volume_row, bg='#FFF0F5')
+        slider_container.pack(side='left', padx=(0, 10))
+        
+        self.create_cat_slider(slider_container)
         
         # 右侧：控制按钮
-        right_frame = tk.Frame(sound_frame, bg=self.colors['background'])
-        right_frame.pack(side='right')
+        right_frame = tk.Frame(sound_frame, bg='#FFF0F5')
+        right_frame.pack(side='right', padx=10, pady=5)
         
-        # 静音按钮 - 紧凑设计
+        # 静音按钮 - 粉色主题
         self.mute_button = tk.Button(
             right_frame,
-            text="🔇",
+            text="🔇 静音",
             font=("微软雅黑", 10, "bold"),
-            bg=self.colors['text_light'],
+            bg='#FFB3C6',
             fg='#FFFFFF',
-            relief='flat',
-            bd=0,
-            width=3,
+            relief='raised',
+            bd=2,
+            width=6,
             height=1,
             command=self.toggle_mute,
             cursor='hand2'
         )
         self.mute_button.pack(side='left', padx=5)
         
-        # 音量指示器 - 紧凑设计
-        self.volume_indicator = tk.Label(
+        # 音效播放器按钮
+        self.sound_player_button = tk.Button(
             right_frame,
-            text="🔊",
-            font=("微软雅黑", 12),
-            bg=self.colors['background'],
-            fg=self.colors['success']
+            text="🎵 音效",
+            font=("微软雅黑", 10, "bold"),
+            bg='#FF99CC',
+            fg='#FFFFFF',
+            relief='raised',
+            bd=2,
+            width=6,
+            height=1,
+            command=self.open_sound_player,
+            cursor='hand2'
         )
-        self.volume_indicator.pack(side='left', padx=5)
+        self.sound_player_button.pack(side='left', padx=5)
+        
+        # 幸运数字按钮
+        self.lucky_button = tk.Button(
+            right_frame,
+            text="🎲 幸运",
+            font=("微软雅黑", 10, "bold"),
+            bg='#FFB366',
+            fg='#FFFFFF',
+            relief='raised',
+            bd=2,
+            width=6,
+            height=1,
+            command=self.generate_lucky_number,
+            cursor='hand2'
+        )
+        self.lucky_button.pack(side='left', padx=5)
+        
+        # 历史记录按钮
+        self.history_button = tk.Button(
+            right_frame,
+            text="📊 历史",
+            font=("微软雅黑", 10, "bold"),
+            bg='#9B59B6',
+            fg='#FFFFFF',
+            relief='raised',
+            bd=2,
+            width=6,
+            height=1,
+            command=self.open_history_window,
+            cursor='hand2'
+        )
+        self.history_button.pack(side='left', padx=5)
     
     def create_button_areas(self):
         """创建按钮区域"""
@@ -396,88 +684,93 @@ class HajimiUI:
     
     
     def create_styled_button(self, parent, text, style, row, column):
-        """创建统一圆润样式化按钮"""
-        # 简化为两种主要样式：粉色系和薄荷绿系
+        """创建统一圆润样式化按钮 - macOS 兼容的自定义按钮"""
+        # 可爱的猫猫粉色主题配色
         if style == 'number':
-            btn_config = {
-                'bg': self.colors['button_normal'], 
-                'fg': self.colors['text'],
-                'activebackground': self.colors['button_hover'],
-                'activeforeground': self.colors['text']
-            }
+            bg_color = '#FFE5EC'  # 非常浅的粉色
+            fg_color = '#8B4789'  # 深紫粉色文字
+            hover_color = '#FFD1DC'
         elif style == 'operator':
-            btn_config = {
-                'bg': self.colors['secondary'], 
-                'fg': '#FFFFFF',
-                'activebackground': self.colors['secondary_light'],
-                'activeforeground': '#FFFFFF'
-            }
+            bg_color = '#FFB3C6'  # 浅粉色
+            fg_color = '#FFFFFF'
+            hover_color = '#FF99B3'
         elif style == 'equals':
-            btn_config = {
-                'bg': self.colors['primary'], 
-                'fg': '#FFFFFF',
-                'activebackground': self.colors['primary_light'],
-                'activeforeground': '#FFFFFF'
-            }
+            bg_color = '#FF6B9D'  # 鲜艳粉色
+            fg_color = '#FFFFFF'
+            hover_color = '#FF5287'
         elif style == 'function':
-            btn_config = {
-                'bg': self.colors['primary'], 
-                'fg': '#FFFFFF',
-                'activebackground': self.colors['primary_light'],
-                'activeforeground': '#FFFFFF'
-            }
+            bg_color = '#E8A5D4'  # 粉紫色
+            fg_color = '#FFFFFF'
+            hover_color = '#D98BC4'
         elif style == 'bmr':
-            btn_config = {
-                'bg': self.colors['secondary'], 
-                'fg': '#FFFFFF',
-                'activebackground': self.colors['secondary_light'],
-                'activeforeground': '#FFFFFF'
-            }
+            bg_color = '#B4E7CE'  # 薄荷绿
+            fg_color = '#FFFFFF'
+            hover_color = '#9FDDBE'
         elif style == 'control':
-            btn_config = {
-                'bg': self.colors['text_light'], 
-                'fg': '#FFFFFF',
-                'activebackground': self.colors['text'],
-                'activeforeground': '#FFFFFF'
-            }
+            bg_color = '#C9ADA7'  # 灰粉色
+            fg_color = '#FFFFFF'
+            hover_color = '#B39B96'
         elif style == 'ai_control':
-            btn_config = {
-                'bg': self.colors['primary'], 
-                'fg': '#FFFFFF',
-                'activebackground': self.colors['primary_light'],
-                'activeforeground': '#FFFFFF'
-            }
+            bg_color = '#FF85A2'  # 亮粉色
+            fg_color = '#FFFFFF'
+            hover_color = '#FF6B8A'
         else:
-            # 默认样式
-            btn_config = {
-                'bg': self.colors['button_normal'], 
-                'fg': self.colors['text'],
-                'activebackground': self.colors['button_hover'],
-                'activeforeground': self.colors['text']
-            }
+            bg_color = '#FFE5EC'  # 默认浅粉色
+            fg_color = '#8B4789'
+            hover_color = '#FFD1DC'
         
-        # 创建圆润按钮
-        btn = tk.Button(
+        # 创建 Frame 作为按钮容器（macOS 兼容方法）
+        btn_frame = tk.Frame(
             parent,
+            bg=bg_color,
+            relief='raised',
+            bd=2,
+            highlightthickness=0
+        )
+        btn_frame.grid(row=row, column=column, padx=4, pady=4, sticky='nsew')
+        
+        # 创建 Label 作为按钮文字
+        btn_label = tk.Label(
+            btn_frame,
             text=text,
             font=("微软雅黑", 12, "bold"),
-            width=8, height=2,
-            relief='flat',
-            bd=0,
-            padx=12,
-            pady=8,
-            command=lambda val=text: self.on_click(val),
+            bg=bg_color,
+            fg=fg_color,
             cursor='hand2',
-            **btn_config
+            padx=20,
+            pady=15
         )
-        btn.grid(row=row, column=column, padx=4, pady=4, sticky='nsew')
+        btn_label.pack(fill='both', expand=True)
         
-        # 添加悬停效果和按下效果
-        btn.bind("<Enter>", lambda e, b=btn: self.button_hover_enter(b, btn_config))
-        btn.bind("<Leave>", lambda e, b=btn: self.button_hover_leave(b, btn_config))
-        btn.bind("<Button-1>", lambda e, b=btn: self.button_press_effect(b, btn_config))
+        # 悬停效果
+        def on_enter(event):
+            btn_frame.config(bg=hover_color)
+            btn_label.config(bg=hover_color)
         
-        return btn
+        def on_leave(event):
+            btn_frame.config(bg=bg_color)
+            btn_label.config(bg=bg_color)
+        
+        def on_press(event):
+            btn_frame.config(relief='sunken')
+            # 立即触发点击事件，避免卡顿
+            self.on_click(text)
+        
+        def on_release(event):
+            btn_frame.config(relief='raised')
+        
+        # 绑定事件
+        btn_frame.bind("<Enter>", on_enter)
+        btn_frame.bind("<Leave>", on_leave)
+        btn_frame.bind("<ButtonPress-1>", on_press)
+        btn_frame.bind("<ButtonRelease-1>", on_release)
+        
+        btn_label.bind("<Enter>", on_enter)
+        btn_label.bind("<Leave>", on_leave)
+        btn_label.bind("<ButtonPress-1>", on_press)
+        btn_label.bind("<ButtonRelease-1>", on_release)
+        
+        return btn_frame
     
     def configure_rounded_button(self, button, style):
         """配置按钮的圆角效果"""
@@ -525,11 +818,18 @@ class HajimiUI:
         widget.config(**{attribute: end_color})
     
     def darken_color(self, color):
-        """将颜色变深 - 双色调深色效果"""
+        """将颜色变深 - 猫猫粉色主题深色效果"""
         color_map = {
+            '#FFE5EC': '#FFD1DC',  # 浅粉色数字按键
+            '#FFB3C6': '#FF99B3',  # 运算符
+            '#FF6B9D': '#FF5287',  # 等号
+            '#E8A5D4': '#D98BC4',  # 数学函数
+            '#B4E7CE': '#9FDDBE',  # BMR按钮
+            '#C9ADA7': '#B39B96',  # 控制按键
+            '#FF85A2': '#FF6B8A',  # AI控制
             self.colors['button_normal']: self.colors['background_dark'],
-            self.colors['secondary']: self.colors['secondary_dark'],  # 薄荷绿深色
-            self.colors['primary']: self.colors['primary_dark'],      # 粉色深色
+            self.colors['secondary']: self.colors['secondary_dark'],
+            self.colors['primary']: self.colors['primary_dark'],
             self.colors['text_light']: '#6B7280',
         }
         return color_map.get(color, color)
@@ -542,7 +842,7 @@ class HajimiUI:
         
         if val == "AC":
             self.clear_display()
-            self.hajimi.play_sound("Hardware Remove.wav")
+            self.hajimi.play_operator_sound()
             return
         
         if val == "⌫":
@@ -571,7 +871,24 @@ class HajimiUI:
 
         # 添加输入到显示区域
         self.add_input(val)
-        self.hajimi.play_random()
+        
+        # 根据按键类型播放对应音效
+        if val.isdigit():
+            # 数字按键：播放对应的固定音效
+            self.hajimi.play_number_sound(val)
+        elif val in ['+', '-', '×', '÷', '.']:
+            # 加减乘除和小数点：播放固定音效
+            self.hajimi.play_operator_sound(val)
+        elif val in ['*', '/']:
+            # 键盘输入的乘除号，映射到对应符号
+            operator_map = {'*': '×', '/': '÷'}
+            self.hajimi.play_operator_sound(operator_map[val])
+        elif val in ['(', ')', '%']:
+            # 括号和百分号：随机播放
+            self.hajimi.play_operator_sound()
+        elif val in ['sin(', 'cos(', 'tan(', 'sqrt(', 'ln(', 'lg(', 'pi', 'e']:
+            # 数学函数和常量：随机播放
+            self.hajimi.play_operator_sound()
 
     def button_press_animation(self, val):
         """按钮按下动画效果"""
@@ -669,12 +986,15 @@ class HajimiUI:
         # 使用动态AI生成评论
         ai_response = self.ai.generate_dynamic_comment(result, msg, self.hajimi.current_expression)
         
+        # 添加到历史记录
+        if result is not None:
+            self.add_to_history(expr, result)
+        
         # 更新显示
         self.update_display(result, ai_response, msg)
         
-        # 更新角色表情和音效
+        # 更新角色表情和音效（react在这里面已经调用）
         self.update_character_expression(result, msg)
-        self.hajimi.react(result)
         
         # 添加结果高亮动画
         self.result_highlight_animation()
@@ -717,6 +1037,7 @@ class HajimiUI:
         self.calc_result_label.config(text="")
         self.result_label.config(text=f"哈基米：{error_msg}")
         self.hajimi.react_to_error(error_msg)
+        self.hajimi.play_error_sound()
         self.update_character_display()
     
     def format_result(self, result):
@@ -771,10 +1092,13 @@ class HajimiUI:
         ])
     
     def update_character_expression(self, result, msg):
-        """更新角色表情"""
+        """更新角色表情和音效"""
         if result is None:
+            # 计算失败：设置表情并播放错误音效
             self.hajimi.react_to_error(msg)
+            self.hajimi.play_error_sound()
         else:
+            # 计算成功：根据结果设置表情并播放音效
             self.hajimi.react(result)
         
         # 更新表情图片
@@ -801,9 +1125,10 @@ class HajimiUI:
         volume = int(value)
         self.hajimi.volume = volume / 100.0  # 转换为0-1范围
         
-        # 更新音量标签
+        # 更新音量标签 - 带emoji
         if hasattr(self, 'volume_label'):
-            self.volume_label.config(text=f"音量: {volume}%")
+            emoji = "🔊" if volume > 50 else ("🔉" if volume > 0 else "🔇")
+            self.volume_label.config(text=f"{emoji} 音量: {volume}%")
         
         # 更新音量指示器（安全检查）
         if hasattr(self, 'volume_indicator'):
@@ -828,13 +1153,21 @@ class HajimiUI:
         if self.hajimi.mute:
             # 取消静音，恢复之前的音量
             self.hajimi.mute = False
-            self.volume_scale.set(int(self.hajimi.volume * 100))
-            self.mute_button.config(text="🔇", bg=self.colors['text_light'])
+            volume = int(self.hajimi.volume * 100)
+            # 更新猫猫滑块位置
+            x = self.slider_min_x + (volume / 100.0) * (self.slider_max_x - self.slider_min_x)
+            self.slider_canvas.coords(self.slider_cat, x, 15)
+            self.slider_canvas.coords(self.slider_progress, 10, 12, x, 18)
+            self.current_volume = volume
+            self.mute_button.config(text="🔇", bg='#FFB3C6')
             status = "有声"
         else:
             # 静音
             self.hajimi.mute = True
-            self.volume_scale.set(0)
+            # 将猫猫滑块移到最左边
+            self.slider_canvas.coords(self.slider_cat, self.slider_min_x, 15)
+            self.slider_canvas.coords(self.slider_progress, 10, 12, self.slider_min_x, 18)
+            self.current_volume = 0
             self.mute_button.config(text="🔊", bg=self.colors['success'])
             status = "静音"
         
@@ -876,6 +1209,376 @@ class HajimiUI:
         }
         status = status_texts.get(self.hajimi.current_expression, "哈基米")
         self.character_status_label.config(text=status)
+    
+    def open_sound_player(self):
+        """打开音效播放器窗口"""
+        win = tk.Toplevel(self.master)
+        win.title("🎵 哈基米音效播放器")
+        win.geometry("500x600")
+        win.configure(bg=self.colors['background'])
+        win.resizable(False, False)
+        
+        # 标题
+        title = tk.Label(
+            win,
+            text="🎵 东海帝皇曼波音效库 🎵",
+            font=("微软雅黑", 16, "bold"),
+            bg=self.colors['background'],
+            fg=self.colors['primary_dark']
+        )
+        title.pack(pady=20)
+        
+        # 音效列表容器
+        list_frame = tk.Frame(win, bg=self.colors['background'])
+        list_frame.pack(fill='both', expand=True, padx=20, pady=10)
+        
+        # 添加滚动条
+        canvas = tk.Canvas(list_frame, bg=self.colors['background'], highlightthickness=0)
+        scrollbar = tk.Scrollbar(list_frame, orient="vertical", command=canvas.yview)
+        scrollable_frame = tk.Frame(canvas, bg=self.colors['background'])
+        
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+        
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+        
+        # 音效列表
+        sound_files = [
+            ("数字音效", [
+                ("曼波（干脆.低", "曼波（干脆.低.wav"),
+                ("曼波（可爱.低", "曼波（可爱.低.wav"),
+                ("曼波↑.低", "曼波↑.低.wav"),
+                ("曼波（干脆.中", "曼波（干脆.中.wav"),
+                ("曼波（可爱.中", "曼波（可爱.中.wav"),
+                ("曼波↑.中", "曼波↑.中.wav"),
+                ("曼波（干脆.高", "曼波（干脆.高.wav"),
+                ("曼波（可爱.高", "曼波（可爱.高.wav"),
+                ("曼波↑.高", "曼波↑.高.wav"),
+                ("哈", "哈.wav"),
+            ]),
+            ("运算符音效", [
+                ("曼波", "曼波.wav"),
+                ("曼波（干脆", "曼波（干脆.wav"),
+                ("曼波（可爱", "曼波（可爱.wav"),
+                ("曼波↑", "曼波↑.wav"),
+            ]),
+            ("特殊音效", [
+                ("曼波欧耶", "曼波欧耶.wav"),
+                ("曼波wow", "曼波wow.wav"),
+                ("帝皇私人笑声", "帝皇私人笑声.wav"),
+                ("曼波duang", "曼波duang.wav"),
+                ("曼波啊米诺斯", "曼波啊米诺斯.wav"),
+                ("曼波我嘞个豆", "曼波我嘞个豆.wav"),
+            ])
+        ]
+        
+        for category, sounds in sound_files:
+            # 分类标题
+            cat_label = tk.Label(
+                scrollable_frame,
+                text=f"━━━ {category} ━━━",
+                font=("微软雅黑", 12, "bold"),
+                bg=self.colors['background'],
+                fg=self.colors['primary']
+            )
+            cat_label.pack(pady=(15, 10))
+            
+            # 音效按钮
+            for sound_name, sound_file in sounds:
+                sound_frame = tk.Frame(scrollable_frame, bg='#FFE5F0', relief='raised', bd=2)
+                sound_frame.pack(fill='x', pady=5, padx=10)
+                
+                # 音效名称
+                name_label = tk.Label(
+                    sound_frame,
+                    text=sound_name,
+                    font=("微软雅黑", 11),
+                    bg='#FFE5F0',
+                    fg=self.colors['text'],
+                    anchor='w'
+                )
+                name_label.pack(side='left', padx=15, pady=8)
+                
+                # 播放按钮
+                play_btn = tk.Button(
+                    sound_frame,
+                    text="▶️ 播放",
+                    font=("微软雅黑", 10, "bold"),
+                    bg=self.colors['primary'],
+                    fg='#FFFFFF',
+                    relief='raised',
+                    bd=2,
+                    cursor='hand2',
+                    command=lambda f=sound_file: self.hajimi.play_sound(f)
+                )
+                play_btn.pack(side='right', padx=10, pady=5)
+        
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+        
+        # 关闭按钮
+        close_btn = tk.Button(
+            win,
+            text="关闭",
+            font=("微软雅黑", 12, "bold"),
+            bg=self.colors['danger'],
+            fg='#FFFFFF',
+            relief='raised',
+            bd=2,
+            width=15,
+            command=win.destroy,
+            cursor='hand2'
+        )
+        close_btn.pack(pady=15)
+    
+    def generate_lucky_number(self):
+        """生成幸运数字"""
+        import random
+        import datetime
+        
+        # 生成幸运数字
+        lucky_num = random.randint(1, 999)
+        
+        # 根据数字特点给出不同的评论
+        comments = []
+        
+        # 特殊数字判断
+        if lucky_num == 520:
+            comment = "哇！幸运数字 520！爱意满满的一天！💕"
+            self.hajimi.play_sound("曼波欧耶.wav")
+        elif lucky_num == 666:
+            comment = "幸运数字 666！今天顺顺利利！🎉"
+            self.hajimi.play_sound("曼波wow.wav")
+        elif lucky_num == 888:
+            comment = "幸运数字 888！发发发！💰"
+            self.hajimi.play_sound("帝皇私人笑声.wav")
+        elif lucky_num == 114:
+            comment = "幸运数字 114！今天要做个好人！😇"
+            self.hajimi.play_sound("曼波.wav")
+        elif lucky_num % 100 == 0:
+            comment = f"幸运数字 {lucky_num}！完美的整百数！🎯"
+            self.hajimi.play_sound("曼波欧耶.wav")
+        elif lucky_num % 10 == 0:
+            comment = f"幸运数字 {lucky_num}！整十数很吉利！✨"
+            self.hajimi.play_sound("曼波（可爱.wav")
+        elif lucky_num < 100:
+            comment = f"幸运数字 {lucky_num}！小数字有大运气！🌟"
+            self.hajimi.play_sound("曼波（干脆.wav")
+        elif lucky_num > 800:
+            comment = f"幸运数字 {lucky_num}！大数字大吉大利！🎊"
+            self.hajimi.play_sound("曼波↑.wav")
+        else:
+            # 一般数字的随机评论
+            general_comments = [
+                f"幸运数字 {lucky_num}！今天很适合学习哦！📚",
+                f"幸运数字 {lucky_num}！心想事成！🌈",
+                f"幸运数字 {lucky_num}！好运连连！🍀",
+                f"幸运数字 {lucky_num}！加油加油！💪",
+                f"幸运数字 {lucky_num}！开心每一天！😊",
+            ]
+            comment = random.choice(general_comments)
+            self.hajimi.play_operator_sound()
+        
+        # 显示结果
+        self.calc_result_label.config(text=str(lucky_num))
+        self.result_label.config(text=f"哈基米：{comment}")
+        
+        # 更新表情
+        if lucky_num in [520, 666, 888] or lucky_num % 100 == 0:
+            self.hajimi.react_to_special('lucky_great')
+        else:
+            self.hajimi.react_to_special('lucky_good')
+        self.update_character_display()
+    
+    def add_to_history(self, expression, result):
+        """添加计算到历史记录"""
+        import datetime
+        timestamp = datetime.datetime.now().strftime("%H:%M:%S")
+        
+        history_item = {
+            'time': timestamp,
+            'expression': expression,
+            'result': str(result)
+        }
+        
+        # 添加到历史记录
+        self.calc_history.insert(0, history_item)
+        
+        # 限制历史记录数量
+        if len(self.calc_history) > self.max_history:
+            self.calc_history = self.calc_history[:self.max_history]
+        
+        # 更新历史记录显示（如果窗口存在）
+        if hasattr(self, 'history_window') and self.history_window.winfo_exists():
+            self.update_history_display()
+    
+    def open_history_window(self):
+        """打开历史记录窗口"""
+        # 如果窗口已存在，则聚焦到该窗口
+        if hasattr(self, 'history_window') and self.history_window.winfo_exists():
+            self.history_window.lift()
+            self.history_window.focus()
+            return
+        
+        self.history_window = tk.Toplevel(self.master)
+        self.history_window.title("📊 计算历史记录")
+        self.history_window.geometry("450x500")
+        self.history_window.configure(bg=self.colors['background'])
+        self.history_window.resizable(False, False)
+        
+        # 标题
+        title = tk.Label(
+            self.history_window,
+            text="📊 最近计算记录",
+            font=("微软雅黑", 16, "bold"),
+            bg=self.colors['background'],
+            fg=self.colors['primary_dark']
+        )
+        title.pack(pady=20)
+        
+        # 历史记录列表容器
+        self.history_list_frame = tk.Frame(self.history_window, bg=self.colors['background'])
+        self.history_list_frame.pack(fill='both', expand=True, padx=20, pady=10)
+        
+        # 添加滚动条
+        history_canvas = tk.Canvas(self.history_list_frame, bg=self.colors['background'], highlightthickness=0)
+        history_scrollbar = tk.Scrollbar(self.history_list_frame, orient="vertical", command=history_canvas.yview)
+        self.history_scrollable_frame = tk.Frame(history_canvas, bg=self.colors['background'])
+        
+        self.history_scrollable_frame.bind(
+            "<Configure>",
+            lambda e: history_canvas.configure(scrollregion=history_canvas.bbox("all"))
+        )
+        
+        history_canvas.create_window((0, 0), window=self.history_scrollable_frame, anchor="nw")
+        history_canvas.configure(yscrollcommand=history_scrollbar.set)
+        
+        history_canvas.pack(side="left", fill="both", expand=True)
+        history_scrollbar.pack(side="right", fill="y")
+        
+        # 显示历史记录
+        self.update_history_display()
+        
+        # 按钮区域
+        btn_frame = tk.Frame(self.history_window, bg=self.colors['background'])
+        btn_frame.pack(pady=15)
+        
+        # 清空历史按钮
+        clear_btn = tk.Button(
+            btn_frame,
+            text="🗑️ 清空历史",
+            font=("微软雅黑", 11, "bold"),
+            bg=self.colors['danger'],
+            fg='#FFFFFF',
+            relief='raised',
+            bd=2,
+            width=12,
+            command=self.clear_history,
+            cursor='hand2'
+        )
+        clear_btn.pack(side='left', padx=5)
+        
+        # 关闭按钮
+        close_btn = tk.Button(
+            btn_frame,
+            text="关闭",
+            font=("微软雅黑", 11, "bold"),
+            bg=self.colors['text_light'],
+            fg='#FFFFFF',
+            relief='raised',
+            bd=2,
+            width=12,
+            command=self.history_window.destroy,
+            cursor='hand2'
+        )
+        close_btn.pack(side='left', padx=5)
+    
+    def update_history_display(self):
+        """更新历史记录显示"""
+        # 清空当前显示
+        for widget in self.history_scrollable_frame.winfo_children():
+            widget.destroy()
+        
+        if not self.calc_history:
+            # 没有历史记录
+            empty_label = tk.Label(
+                self.history_scrollable_frame,
+                text="还没有计算记录哦~\n快去使用计算器吧！😊",
+                font=("微软雅黑", 12),
+                bg=self.colors['background'],
+                fg=self.colors['text_light']
+            )
+            empty_label.pack(pady=50)
+        else:
+            # 显示历史记录
+            for i, item in enumerate(self.calc_history):
+                history_frame = tk.Frame(
+                    self.history_scrollable_frame,
+                    bg='#FFE5F0',
+                    relief='raised',
+                    bd=2
+                )
+                history_frame.pack(fill='x', pady=5, padx=10)
+                
+                # 时间标签
+                time_label = tk.Label(
+                    history_frame,
+                    text=f"⏰ {item['time']}",
+                    font=("微软雅黑", 9),
+                    bg='#FFE5F0',
+                    fg=self.colors['text_light']
+                )
+                time_label.pack(anchor='w', padx=10, pady=(5, 0))
+                
+                # 表达式
+                expr_label = tk.Label(
+                    history_frame,
+                    text=item['expression'],
+                    font=("Consolas", 11),
+                    bg='#FFE5F0',
+                    fg=self.colors['text']
+                )
+                expr_label.pack(anchor='w', padx=15)
+                
+                # 结果
+                result_label = tk.Label(
+                    history_frame,
+                    text=f"= {item['result']}",
+                    font=("Consolas", 13, "bold"),
+                    bg='#FFE5F0',
+                    fg=self.colors['primary_dark']
+                )
+                result_label.pack(anchor='w', padx=15, pady=(0, 5))
+                
+                # 点击加载按钮
+                load_btn = tk.Button(
+                    history_frame,
+                    text="📝 加载",
+                    font=("微软雅黑", 9),
+                    bg=self.colors['secondary'],
+                    fg='#FFFFFF',
+                    relief='raised',
+                    bd=1,
+                    cursor='hand2',
+                    command=lambda e=item['expression']: self.load_from_history(e)
+                )
+                load_btn.pack(anchor='e', padx=10, pady=5)
+    
+    def load_from_history(self, expression):
+        """从历史记录加载表达式"""
+        self.input_label.config(text=expression)
+        self.hajimi.play_operator_sound()
+        if hasattr(self, 'history_window') and self.history_window.winfo_exists():
+            self.history_window.destroy()
+    
+    def clear_history(self):
+        """清空历史记录"""
+        self.calc_history = []
+        self.update_history_display()
+        self.hajimi.play_sound("曼波duang.wav")
 
     def open_bmr_window(self):
         """打开BMR计算窗口 - 重新设计的简化版本"""
