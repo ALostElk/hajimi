@@ -1178,9 +1178,15 @@ class HajimiUI:
         self.character_status_label.config(text=status)
     
     def on_volume_change(self, value):
-        """音量滑块变化事件"""
+        """音量滑块变化事件 - 同时控制音效和背景音乐音量"""
         volume = int(value)
         self.hajimi.volume = volume / 100.0  # 转换为0-1范围
+        
+        # 同时设置背景音乐音量
+        try:
+            pygame.mixer.music.set_volume(self.hajimi.volume)
+        except Exception as e:
+            print(f"设置背景音乐音量失败: {e}")
         
         # 更新音量标签 - 带emoji
         if hasattr(self, 'volume_label'):
@@ -1204,9 +1210,16 @@ class HajimiUI:
                 self.mute_button.config(text="🔇", bg=self.colors['danger'])
             else:
                 self.mute_button.config(text="🔇", bg=self.colors['text_light'])
+        
+        # 同步更新背景音乐播放器的音量滑块（如果存在且窗口未关闭）
+        if hasattr(self, 'bg_music_volume_scale') and self.bg_music_volume_scale.winfo_exists():
+            try:
+                self.bg_music_volume_scale.set(volume)
+            except:
+                pass  # 忽略已关闭窗口的错误
     
     def toggle_mute(self):
-        """切换静音状态"""
+        """切换静音状态 - 同时控制音效和背景音乐"""
         if self.hajimi.mute:
             # 取消静音，恢复之前的音量
             self.hajimi.mute = False
@@ -1216,6 +1229,13 @@ class HajimiUI:
             self.slider_canvas.coords(self.slider_cat, x, 15)
             self.slider_canvas.coords(self.slider_progress, 10, 12, x, 18)
             self.current_volume = volume
+            
+            # 恢复背景音乐音量
+            try:
+                pygame.mixer.music.set_volume(self.hajimi.volume)
+            except Exception as e:
+                print(f"恢复背景音乐音量失败: {e}")
+            
             self.mute_button.config(text="🔇", bg='#FFB3C6')
             status = "有声"
         else:
@@ -1225,6 +1245,13 @@ class HajimiUI:
             self.slider_canvas.coords(self.slider_cat, self.slider_min_x, 15)
             self.slider_canvas.coords(self.slider_progress, 10, 12, self.slider_min_x, 18)
             self.current_volume = 0
+            
+            # 静音背景音乐
+            try:
+                pygame.mixer.music.set_volume(0.0)
+            except Exception as e:
+                print(f"静音背景音乐失败: {e}")
+            
             self.mute_button.config(text="🔊", bg=self.colors['success'])
             status = "静音"
         
@@ -2756,15 +2783,15 @@ class HajimiUI:
         """打开背景音乐播放器"""
         music_win = tk.Toplevel(self.master)
         music_win.title("🎵 哈基米背景音乐")
-        music_win.geometry("600x500")
+        music_win.geometry("1000x800")
         music_win.configure(bg=self.colors['background'])
-        music_win.resizable(False, False)
+        music_win.resizable(True, True)  # 允许调整窗口大小
         
         # 窗口居中
         music_win.update_idletasks()
         x = (music_win.winfo_screenwidth() // 2) - (600 // 2)
         y = (music_win.winfo_screenheight() // 2) - (500 // 2)
-        music_win.geometry(f"600x500+{x}+{y}")
+        music_win.geometry(f"600x900+{x}+{y}")
         
         # 标题区域
         title_frame = tk.Frame(music_win, bg=self.colors['primary'], height=60)
@@ -2809,29 +2836,30 @@ class HajimiUI:
         )
         self.bg_music_status_label.pack(pady=5)
         
-        # 音乐文件列表
-        music_files = [
-            ("万恶之源", "万恶之源.WAV"),
-            ("万恶之源2", "万恶之源2.WAV"),
-            ("2.23AM", "2.23AM.WAV"),
-            ("世上最小的哈基米", "世上最小的哈基米.WAV"),
-            ("来去曼波", "来去曼波.WAV"),
-            ("柠檬树上哈基果", "柠檬树上哈基果.WAV"),
-            ("孤高曼波", "孤高曼波.WAV"),
-            ("神曼波", "神曼波.WAV"),
-            ("夜哈", "夜哈.WAV"),
-            ("打火基", "打火基.WAV"),
-            ("野哈飞舞", "野哈飞舞.WAV"),
-            ("曼波、曼波、有时哈基米", "曼波、曼波、有时哈基米.WAV"),
-            ("曼波你身", "曼波你身.WAV"),
-            ("哈基山的基米美如水啊", "哈基山的基米美如水啊.WAV"),
-            ("太空曼波", "太空曼波.WAV"),
-            ("哈雪大冒险", "哈雪大冒险.WAV"),
-            ("最后一哈", "最后一哈.WAV"),
-            ("不再曼波", "不再曼波.WAV"),
-            ("蓝莲哈", "蓝莲哈.WAV"),
-            ("基米说", "基米说.WAV")
-        ]
+        # 音乐文件列表（如果还没有设置的话）
+        if not hasattr(self, 'music_files') or not self.music_files:
+            self.music_files = [
+                ("万恶之源", "万恶之源.WAV"),
+                ("万恶之源2", "万恶之源2.WAV"),
+                ("2.23AM", "2.23AM.WAV"),
+                ("世上最小的哈基米", "世上最小的哈基米.WAV"),
+                ("来去曼波", "来去曼波.WAV"),
+                ("柠檬树上哈基果", "柠檬树上哈基果.WAV"),
+                ("孤高曼波", "孤高曼波.WAV"),
+                ("神曼波", "神曼波.WAV"),
+                ("夜哈", "夜哈.WAV"),
+                ("打火基", "打火基.WAV"),
+                ("野哈飞舞", "野哈飞舞.WAV"),
+                ("曼波、曼波、有时哈基米", "曼波、曼波、有时哈基米.WAV"),
+                ("曼波你身", "曼波你身.WAV"),
+                ("哈基山的基米美如水啊", "哈基山的基米美如水啊.WAV"),
+                ("太空曼波", "太空曼波.WAV"),
+                ("哈雪大冒险", "哈雪大冒险.WAV"),
+                ("最后一哈", "最后一哈.WAV"),
+                ("不再曼波", "不再曼波.WAV"),
+                ("蓝莲哈", "蓝莲哈.WAV"),
+                ("基米说", "基米说.WAV")
+            ]
         
         # 歌曲选择区域
         song_frame = tk.Frame(content_frame, bg=self.colors['background'])
@@ -2864,7 +2892,7 @@ class HajimiUI:
         list_canvas.configure(yscrollcommand=list_scrollbar.set)
         
         # 创建歌曲列表项
-        for i, (song_name, song_file) in enumerate(music_files):
+        for i, (song_name, song_file) in enumerate(self.music_files):
             song_item_frame = tk.Frame(scrollable_list, bg='#FFE5F0', relief='raised', bd=1)
             song_item_frame.pack(fill='x', pady=2, padx=5)
             
@@ -2904,6 +2932,21 @@ class HajimiUI:
         control_buttons_frame = tk.Frame(control_frame, bg=self.colors['background'])
         control_buttons_frame.pack()
         
+        # 上一首按钮
+        self.bg_music_prev_btn = tk.Button(
+            control_buttons_frame,
+            text="上一首",
+            font=("微软雅黑", 11, "bold"),
+            bg=self.colors['accent'],
+            fg='#FFFFFF',
+            relief='raised',
+            bd=2,
+            width=10,
+            command=self.prev_music,
+            cursor='hand2'
+        )
+        self.bg_music_prev_btn.pack(side='left', padx=5)
+        
         # 暂停/继续按钮
         self.bg_music_pause_btn = tk.Button(
             control_buttons_frame,
@@ -2918,6 +2961,21 @@ class HajimiUI:
             cursor='hand2'
         )
         self.bg_music_pause_btn.pack(side='left', padx=5)
+        
+        # 下一首按钮
+        self.bg_music_next_btn = tk.Button(
+            control_buttons_frame,
+            text="下一首",
+            font=("微软雅黑", 11, "bold"),
+            bg=self.colors['accent'],
+            fg='#FFFFFF',
+            relief='raised',
+            bd=2,
+            width=10,
+            command=self.next_music,
+            cursor='hand2'
+        )
+        self.bg_music_next_btn.pack(side='left', padx=5)
         
         # 停止按钮
         self.bg_music_stop_btn = tk.Button(
@@ -2959,8 +3017,72 @@ class HajimiUI:
             length=300,
             command=self.set_background_music_volume
         )
-        self.bg_music_volume_scale.set(30)  # 背景音乐默认音量30%
+        # 背景音乐音量滑块与主音量控制同步
+        main_volume = int(self.hajimi.volume * 100)
+        self.bg_music_volume_scale.set(main_volume)
         self.bg_music_volume_scale.pack(pady=5)
+        
+        # 播放模式选择
+        mode_frame = tk.Frame(control_frame, bg=self.colors['background'])
+        mode_frame.pack(pady=10)
+        
+        mode_label = tk.Label(
+            mode_frame,
+            text="🎵 播放模式:",
+            font=("微软雅黑", 10, "bold"),
+            bg=self.colors['background'],
+            fg=self.colors['text']
+        )
+        mode_label.pack()
+        
+        # 播放模式按钮组
+        mode_buttons_frame = tk.Frame(mode_frame, bg=self.colors['background'])
+        mode_buttons_frame.pack(pady=5)
+        
+        # 单曲循环按钮
+        self.single_mode_btn = tk.Button(
+            mode_buttons_frame,
+            text="单曲循环",
+            font=("微软雅黑", 10, "bold"),
+            bg=self.colors['primary'],
+            fg='#FFFFFF',
+            relief='raised',
+            bd=2,
+            width=12,
+            command=lambda: self.set_play_mode('single'),
+            cursor='hand2'
+        )
+        self.single_mode_btn.pack(side='left', padx=5)
+        
+        # 顺序播放按钮
+        self.sequence_mode_btn = tk.Button(
+            mode_buttons_frame,
+            text="顺序播放",
+            font=("微软雅黑", 10, "bold"),
+            bg=self.colors['secondary'],
+            fg='#FFFFFF',
+            relief='raised',
+            bd=2,
+            width=12,
+            command=lambda: self.set_play_mode('sequence'),
+            cursor='hand2'
+        )
+        self.sequence_mode_btn.pack(side='left', padx=5)
+        
+        # 随机播放按钮
+        self.random_mode_btn = tk.Button(
+            mode_buttons_frame,
+            text="随机播放",
+            font=("微软雅黑", 10, "bold"),
+            bg=self.colors['accent'],
+            fg='#FFFFFF',
+            relief='raised',
+            bd=2,
+            width=12,
+            command=lambda: self.set_play_mode('random'),
+            cursor='hand2'
+        )
+        self.random_mode_btn.pack(side='left', padx=5)
         
         # 关闭按钮
         close_btn = tk.Button(
@@ -2980,9 +3102,18 @@ class HajimiUI:
         # 初始化背景音乐状态
         self.current_bg_music = None
         self.is_bg_music_playing = False
+        self.current_music_index = 0  # 当前播放的音乐索引
+        self.music_play_mode = 'single'  # 播放模式：'single'(单曲循环), 'sequence'(顺序播放), 'random'(随机播放)
+        # 注意：self.music_files 已经在上面设置了，不要重新初始化为空列表
         
         # 播放欢迎音效
         self.hajimi.play_sound("曼波欧耶.wav")
+        
+        # 设置音乐结束事件监听
+        self.setup_music_end_event()
+        
+        # 初始化播放模式按钮状态
+        self.set_play_mode('single')  # 默认单曲循环模式
     
     def play_background_music(self, song_file, song_name):
         """播放背景音乐"""
@@ -2995,17 +3126,39 @@ class HajimiUI:
             self.current_bg_music = song_file
             self.is_bg_music_playing = True
             
+            # 更新当前音乐索引
+            for i, (name, file) in enumerate(self.music_files):
+                if file == song_file:
+                    self.current_music_index = i
+                    break
+            
             # 播放音乐
             music_path = os.path.join(os.path.dirname(__file__), "../shucai/music", song_file)
             if os.path.exists(music_path):
                 pygame.mixer.music.load(music_path)
-                # 背景音乐音量较低
-                bg_volume = self.bg_music_volume_scale.get() / 100.0
-                pygame.mixer.music.set_volume(bg_volume)
-                pygame.mixer.music.play(-1)  # 循环播放
+                # 使用主音量控制的值，而不是背景音乐播放器的独立音量
+                pygame.mixer.music.set_volume(self.hajimi.volume)
+                
+                # 根据播放模式设置循环
+                if self.music_play_mode == 'single':
+                    pygame.mixer.music.play(-1)  # 单曲循环
+                    loop_text = "🔄 单曲循环"
+                else:
+                    pygame.mixer.music.play(0)  # 播放一次
+                    if self.music_play_mode == 'sequence':
+                        loop_text = "▶️ 顺序播放"
+                    else:
+                        loop_text = "🔀 随机播放"
                 
                 # 更新状态显示
-                self.bg_music_status_label.config(text=f"🎵 正在播放: {song_name}\n🔄 循环播放模式")
+                mode_names = {
+                    'single': '单曲循环',
+                    'sequence': '顺序播放', 
+                    'random': '随机播放'
+                }
+                self.bg_music_status_label.config(
+                    text=f"🎵 正在播放: {song_name}\n{loop_text}\n🎵 播放模式: {mode_names[self.music_play_mode]}"
+                )
                 
                 # 播放成功音效
                 self.hajimi.play_sound("曼波欧耶.wav")
@@ -3049,12 +3202,166 @@ class HajimiUI:
             print(f"停止背景音乐失败: {e}")
     
     def set_background_music_volume(self, volume):
-        """设置背景音乐音量"""
+        """设置背景音乐音量 - 同时更新主音量控制"""
         try:
             volume_float = int(volume) / 100.0
             pygame.mixer.music.set_volume(volume_float)
+            
+            # 同步更新主音量控制
+            self.hajimi.volume = volume_float
+            self.current_volume = int(volume)
+            
+            # 更新主界面的音量标签（如果存在且窗口未关闭）
+            if hasattr(self, 'volume_label') and self.volume_label.winfo_exists():
+                try:
+                    emoji = "🔊" if int(volume) > 50 else ("🔉" if int(volume) > 0 else "🔇")
+                    self.volume_label.config(text=f"{emoji} 音量: {int(volume)}%")
+                except:
+                    pass
+            
+            # 更新主界面的猫猫滑块位置（如果存在且窗口未关闭）
+            if (hasattr(self, 'slider_canvas') and hasattr(self, 'slider_min_x') and 
+                hasattr(self, 'slider_max_x') and self.slider_canvas.winfo_exists()):
+                try:
+                    x = self.slider_min_x + (int(volume) / 100.0) * (self.slider_max_x - self.slider_min_x)
+                    self.slider_canvas.coords(self.slider_cat, x, 15)
+                    self.slider_canvas.coords(self.slider_progress, 10, 12, x, 18)
+                except:
+                    pass
+            
+            # 更新静音按钮状态（如果存在且窗口未关闭）
+            if hasattr(self, 'mute_button') and self.mute_button.winfo_exists():
+                try:
+                    if int(volume) == 0:
+                        self.mute_button.config(text="🔇", bg=self.colors['danger'])
+                    else:
+                        self.mute_button.config(text="🔇", bg=self.colors['text_light'])
+                except:
+                    pass
+                    
         except Exception as e:
             print(f"设置背景音乐音量失败: {e}")
+    
+    def prev_music(self):
+        """播放上一首音乐"""
+        if not self.music_files:
+            return
+            
+        try:
+            # 根据播放模式选择上一首
+            if self.music_play_mode == 'random':
+                # 随机模式：随机选择一首
+                import random
+                self.current_music_index = random.randint(0, len(self.music_files) - 1)
+            else:
+                # 顺序模式：向前移动
+                self.current_music_index = (self.current_music_index - 1) % len(self.music_files)
+            
+            # 播放选中的音乐
+            song_name, song_file = self.music_files[self.current_music_index]
+            self.play_background_music(song_file, song_name)
+            
+        except Exception as e:
+            print(f"播放上一首音乐失败: {e}")
+    
+    def next_music(self):
+        """播放下一首音乐"""
+        if not self.music_files:
+            return
+            
+        try:
+            # 根据播放模式选择下一首
+            if self.music_play_mode == 'random':
+                # 随机模式：随机选择一首
+                import random
+                self.current_music_index = random.randint(0, len(self.music_files) - 1)
+            else:
+                # 顺序模式：向后移动
+                self.current_music_index = (self.current_music_index + 1) % len(self.music_files)
+            
+            # 播放选中的音乐
+            song_name, song_file = self.music_files[self.current_music_index]
+            self.play_background_music(song_file, song_name)
+            
+        except Exception as e:
+            print(f"播放下一首音乐失败: {e}")
+    
+    def set_play_mode(self, mode):
+        """设置播放模式"""
+        self.music_play_mode = mode
+        
+        # 更新按钮状态
+        if hasattr(self, 'single_mode_btn'):
+            if mode == 'single':
+                self.single_mode_btn.config(bg=self.colors['primary_dark'])
+                self.sequence_mode_btn.config(bg=self.colors['secondary'])
+                self.random_mode_btn.config(bg=self.colors['accent'])
+            elif mode == 'sequence':
+                self.single_mode_btn.config(bg=self.colors['primary'])
+                self.sequence_mode_btn.config(bg=self.colors['secondary_dark'])
+                self.random_mode_btn.config(bg=self.colors['accent'])
+            elif mode == 'random':
+                self.single_mode_btn.config(bg=self.colors['primary'])
+                self.sequence_mode_btn.config(bg=self.colors['secondary'])
+                self.random_mode_btn.config(bg=self.colors['accent_light'])
+        
+        # 更新状态显示
+        mode_names = {
+            'single': '单曲循环',
+            'sequence': '顺序播放', 
+            'random': '随机播放'
+        }
+        if hasattr(self, 'bg_music_status_label'):
+            current_text = self.bg_music_status_label.cget('text')
+            if "播放模式" in current_text:
+                # 更新现有状态
+                lines = current_text.split('\n')
+                lines[-1] = f"🎵 播放模式: {mode_names[mode]}"
+                self.bg_music_status_label.config(text='\n'.join(lines))
+            else:
+                # 添加播放模式信息
+                self.bg_music_status_label.config(text=current_text + f"\n🎵 播放模式: {mode_names[mode]}")
+        
+        # 播放模式切换音效
+        self.hajimi.play_sound("曼波欧耶.wav")
+    
+    def setup_music_end_event(self):
+        """设置音乐结束事件监听"""
+        try:
+            # 使用定时器检查音乐播放状态
+            self.check_music_status()
+        except Exception as e:
+            print(f"设置音乐结束事件失败: {e}")
+    
+    def check_music_status(self):
+        """检查音乐播放状态，处理自动切换"""
+        try:
+            # 检查是否正在播放音乐
+            if (self.current_bg_music and 
+                self.music_play_mode != 'single' and 
+                not pygame.mixer.music.get_busy() and 
+                self.is_bg_music_playing):
+                
+                # 音乐播放结束，自动播放下一首
+                if self.music_play_mode == 'sequence':
+                    # 顺序播放：播放下一首
+                    self.next_music()
+                elif self.music_play_mode == 'random':
+                    # 随机播放：随机选择一首
+                    import random
+                    self.current_music_index = random.randint(0, len(self.music_files) - 1)
+                    song_name, song_file = self.music_files[self.current_music_index]
+                    self.play_background_music(song_file, song_name)
+            
+            # 每2秒检查一次
+            if hasattr(self, 'master') and self.master:
+                self.master.after(2000, self.check_music_status)
+            
+        except Exception as e:
+            print(f"检查音乐状态失败: {e}")
+            # 继续定时检查
+            if hasattr(self, 'master') and self.master:
+                self.master.after(2000, self.check_music_status)
     
     
     
