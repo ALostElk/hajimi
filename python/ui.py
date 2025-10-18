@@ -79,7 +79,7 @@ class HajimiUI:
         
         # 顶部emoji装饰行
         emoji_top = tk.Label(
-            title_frame, 
+            title_frame,
             text="✨ 🐱 ✨", 
             font=("微软雅黑", 16),
             bg=self.colors['primary_light'],
@@ -484,17 +484,15 @@ class HajimiUI:
         )
         sound_frame.pack(pady=10, padx=20, fill='x')
         
-        # 左侧：音量滑块和标签
-        left_frame = tk.Frame(sound_frame, bg='#FFF0F5')
-        left_frame.pack(side='left', fill='x', expand=True, padx=10, pady=5)
+        # 音量控制区域 - 重新布局为两行
         
-        # 音量标签和滑块在同一行
-        volume_row = tk.Frame(left_frame, bg='#FFF0F5')
-        volume_row.pack(fill='x')
+        # 第一行：音量标签和滑块
+        top_row = tk.Frame(sound_frame, bg='#FFF0F5')
+        top_row.pack(fill='x', padx=10, pady=(5, 2))
         
-        # 音量标签 - 添加emoji
+        # 音量标签
         self.volume_label = tk.Label(
-            volume_row,
+            top_row,
             text="🔊 音量: 50%",
             font=("微软雅黑", 10, "bold"),
             bg='#FFF0F5',
@@ -503,78 +501,108 @@ class HajimiUI:
         self.volume_label.pack(side='left', padx=(0, 8))
         
         # 创建自定义的猫猫滑动条
-        slider_container = tk.Frame(volume_row, bg='#FFF0F5')
-        slider_container.pack(side='left', padx=(0, 10))
+        slider_container = tk.Frame(top_row, bg='#FFF0F5')
+        slider_container.pack(side='left')
         
         self.create_cat_slider(slider_container)
         
-        # 右侧：控制按钮
-        right_frame = tk.Frame(sound_frame, bg='#FFF0F5')
-        right_frame.pack(side='right', padx=10, pady=5)
-        
-        # 静音按钮 - 粉色主题
+        # 静音按钮放在滑块右边
         self.mute_button = tk.Button(
-            right_frame,
+            top_row,
             text="🔇 静音",
             font=("微软雅黑", 10, "bold"),
             bg='#FFB3C6',
             fg='#FFFFFF',
             relief='raised',
             bd=2,
-            width=6,
+            width=8,
             height=1,
             command=self.toggle_mute,
             cursor='hand2'
         )
-        self.mute_button.pack(side='left', padx=5)
+        self.mute_button.pack(side='left', padx=10)
+        
+        # 第二行：功能按钮
+        bottom_row = tk.Frame(sound_frame, bg='#FFF0F5')
+        bottom_row.pack(fill='x', padx=10, pady=(2, 5))
+        
+        # 左侧标签
+        func_label = tk.Label(
+            bottom_row,
+            text="📱 功能:",
+            font=("微软雅黑", 10, "bold"),
+            bg='#FFF0F5',
+            fg=self.colors['primary_dark']
+        )
+        func_label.pack(side='left', padx=(0, 8))
+        
+        # 功能按钮容器
+        btn_container = tk.Frame(bottom_row, bg='#FFF0F5')
+        btn_container.pack(side='left')
         
         # 音效播放器按钮
         self.sound_player_button = tk.Button(
-            right_frame,
+            btn_container,
             text="🎵 音效",
             font=("微软雅黑", 10, "bold"),
             bg='#FF99CC',
             fg='#FFFFFF',
             relief='raised',
             bd=2,
-            width=6,
+            width=8,
             height=1,
             command=self.open_sound_player,
             cursor='hand2'
         )
-        self.sound_player_button.pack(side='left', padx=5)
+        self.sound_player_button.pack(side='left', padx=3)
         
         # 幸运数字按钮
         self.lucky_button = tk.Button(
-            right_frame,
+            btn_container,
             text="🎲 幸运",
             font=("微软雅黑", 10, "bold"),
             bg='#FFB366',
             fg='#FFFFFF',
             relief='raised',
             bd=2,
-            width=6,
+            width=8,
             height=1,
             command=self.generate_lucky_number,
             cursor='hand2'
         )
-        self.lucky_button.pack(side='left', padx=5)
+        self.lucky_button.pack(side='left', padx=3)
         
         # 历史记录按钮
         self.history_button = tk.Button(
-            right_frame,
+            btn_container,
             text="📊 历史",
             font=("微软雅黑", 10, "bold"),
             bg='#9B59B6',
             fg='#FFFFFF',
             relief='raised',
             bd=2,
-            width=6,
+            width=8,
             height=1,
             command=self.open_history_window,
             cursor='hand2'
         )
-        self.history_button.pack(side='left', padx=5)
+        self.history_button.pack(side='left', padx=3)
+        
+        # 对话助手按钮
+        self.chat_button = tk.Button(
+            btn_container,
+            text="💬 对话",
+            font=("微软雅黑", 10, "bold"),
+            bg='#3498DB',
+            fg='#FFFFFF',
+            relief='raised',
+            bd=2,
+            width=8,
+            height=1,
+            command=self.open_chat_window,
+            cursor='hand2'
+        )
+        self.chat_button.pack(side='left', padx=3)
     
     def create_button_areas(self):
         """创建按钮区域"""
@@ -1769,6 +1797,10 @@ class HajimiUI:
         )
         result_label.pack(pady=15)
         
+        # 存储BMR计算数据和UI组件引用
+        bmr_data = {}
+        ui_refs = {}  # 存储UI组件引用
+        
         # 简化的计算函数 - 直接在窗口内定义
         def calculate_bmr_simple():
             """简化的BMR计算函数"""
@@ -1810,6 +1842,21 @@ class HajimiUI:
                 # 显示结果
                 result_label.config(text=msg)
                 
+                # 保存数据用于AI报告
+                if result is not None:
+                    # 从计算器获取BMI
+                    bmi = weight / ((height/100) ** 2)
+                    bmr_data['gender'] = gender
+                    bmr_data['age'] = int(age)
+                    bmr_data['height'] = int(height)
+                    bmr_data['weight'] = float(weight)
+                    bmr_data['bmr'] = int(result)
+                    bmr_data['bmi'] = round(bmi, 1)
+                    # 启用AI报告按钮
+                    if 'ai_report_btn' in ui_refs:
+                        ui_refs['ai_report_btn'].config(state='normal', bg='#FF69B4')
+                        print("AI报告按钮已启用")
+                
                 # 更新角色表情
                 if result is not None:
                     if result < 1300:
@@ -1828,6 +1875,39 @@ class HajimiUI:
                 import traceback
                 traceback.print_exc()
         
+        def generate_ai_report():
+            """生成AI健康报告"""
+            if not bmr_data:
+                result_label.config(text="⚠️ 曼波～ 请先计算BMR数据哦！")
+                return
+            
+            # 播放音效
+            self.hajimi.play_sound("曼波欧耶.wav")
+            
+            # 显示加载状态
+            result_label.config(text="🎨 哈基米正在生成你的专属健康报告...\n曼波～ 请稍等片刻～")
+            win.update()
+            
+            # 生成AI报告
+            try:
+                report = self.ai.generate_bmr_report(
+                    gender=bmr_data['gender'],
+                    age=bmr_data['age'],
+                    height=bmr_data['height'],
+                    weight=bmr_data['weight'],
+                    bmr=bmr_data['bmr'],
+                    bmi=bmr_data['bmi']
+                )
+                
+                # 显示报告窗口
+                self.show_bmr_report(report, bmr_data)
+                
+            except Exception as e:
+                print(f"生成AI报告失败: {e}")
+                result_label.config(text=f"😰 哈基米：AI报告生成失败了\n💡 {str(e)}")
+                import traceback
+                traceback.print_exc()
+        
         
         # 按钮区域
         button_frame = tk.Frame(win, bg=self.colors['background'])
@@ -1837,17 +1917,53 @@ class HajimiUI:
         calc_btn = tk.Button(
             button_frame, 
             text="🏥 开始健康分析",
-            font=("微软雅黑", 16, "bold"),
+            font=("微软雅黑", 14, "bold"),
             bg=self.colors['primary'],
             fg='#FFFFFF',
             command=calculate_bmr_simple,
-            width=20,
-            height=3,
+            width=18,
+            height=2,
             relief='solid',
             bd=2,
             cursor='hand2'
         )
-        calc_btn.pack(pady=10)
+        calc_btn.pack(pady=5)
+        
+        # AI报告按钮
+        ai_report_btn = tk.Button(
+            button_frame,
+            text="🎨 生成AI健康报告",
+            font=("微软雅黑", 14, "bold"),
+            bg='#CCCCCC',  # 初始灰色
+            fg='#FFFFFF',
+            command=generate_ai_report,
+            width=18,
+            height=2,
+            relief='solid',
+            bd=2,
+            cursor='hand2',
+            state='disabled'  # 初始禁用，计算后启用
+        )
+        ai_report_btn.pack(pady=5)
+        
+        # 存储按钮引用
+        ui_refs['ai_report_btn'] = ai_report_btn
+        
+        # 返回按钮
+        back_btn = tk.Button(
+            button_frame,
+            text="🔙 返回主界面",
+            font=("微软雅黑", 12, "bold"),
+            bg=self.colors['text_light'],
+            fg='#FFFFFF',
+            command=win.destroy,
+            width=18,
+            height=1,
+            relief='solid',
+            bd=2,
+            cursor='hand2'
+        )
+        back_btn.pack(pady=5)
         
         
         # 示例提示
@@ -1863,5 +1979,466 @@ class HajimiUI:
             justify='center'
         )
         example_label.pack()
+    
+    def show_bmr_report(self, report, bmr_data):
+        """显示BMR健康报告窗口"""
+        report_win = tk.Toplevel(self.master)
+        report_win.title("🎨 哈基米专属健康报告")
+        report_win.geometry("700x800")
+        report_win.configure(bg=self.colors['background'])
+        report_win.resizable(True, True)
+        
+        # 窗口居中
+        report_win.update_idletasks()
+        x = (report_win.winfo_screenwidth() // 2) - (700 // 2)
+        y = (report_win.winfo_screenheight() // 2) - (800 // 2)
+        report_win.geometry(f"700x800+{x}+{y}")
+        
+        # 标题
+        title_frame = tk.Frame(report_win, bg=self.colors['primary'], height=80)
+        title_frame.pack(fill='x')
+        title_frame.pack_propagate(False)
+        
+        title_label = tk.Label(
+            title_frame,
+            text="🎀 哈基米的专属健康报告 🎀",
+            font=("微软雅黑", 20, "bold"),
+            bg=self.colors['primary'],
+            fg='#FFFFFF'
+        )
+        title_label.pack(expand=True)
+        
+        # 报告内容区域（带滚动条）
+        content_frame = tk.Frame(report_win, bg=self.colors['background'])
+        content_frame.pack(fill='both', expand=True, padx=20, pady=20)
+        
+        # 添加滚动条
+        canvas = tk.Canvas(content_frame, bg=self.colors['background'], highlightthickness=0)
+        scrollbar = tk.Scrollbar(content_frame, orient="vertical", command=canvas.yview)
+        scrollable_frame = tk.Frame(canvas, bg=self.colors['background'])
+        
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+        
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+        
+        # 报告内容（使用Text widget显示Markdown格式）
+        report_text = tk.Text(
+            scrollable_frame,
+            font=("微软雅黑", 11),
+            bg='#FFFFFF',
+            fg=self.colors['text'],
+            wrap='word',
+            padx=20,
+            pady=20,
+            relief='flat',
+            bd=0
+        )
+        report_text.insert('1.0', report)
+        report_text.config(state='disabled')  # 只读
+        report_text.pack(fill='both', expand=True)
+        
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+        
+        # 底部按钮
+        btn_frame = tk.Frame(report_win, bg=self.colors['background'])
+        btn_frame.pack(fill='x', padx=20, pady=15)
+        
+        # 关闭按钮
+        close_btn = tk.Button(
+            btn_frame,
+            text="关闭",
+            font=("微软雅黑", 12, "bold"),
+            bg=self.colors['text_light'],
+            fg='#FFFFFF',
+            relief='raised',
+            bd=2,
+            width=15,
+            command=report_win.destroy,
+            cursor='hand2'
+        )
+        close_btn.pack(side='right', padx=5)
+        
+        # 播放庆祝音效
+        self.hajimi.play_sound("帝皇私人笑声.wav")
+    
+    def open_chat_window(self):
+        """打开与哈基米的对话窗口"""
+        chat_win = tk.Toplevel(self.master)
+        chat_win.title("💬 与哈基米对话")
+        chat_win.geometry("600x700")
+        chat_win.configure(bg=self.colors['background'])
+        chat_win.resizable(True, True)
+        
+        # 窗口居中
+        chat_win.update_idletasks()
+        x = (chat_win.winfo_screenwidth() // 2) - (600 // 2)
+        y = (chat_win.winfo_screenheight() // 2) - (700 // 2)
+        chat_win.geometry(f"600x700+{x}+{y}")
+        
+        # 对话历史记录（保持记忆功能）
+        conversation_history = []
+        
+        # 标题栏
+        title_frame = tk.Frame(chat_win, bg=self.colors['primary'], height=70)
+        title_frame.pack(fill='x')
+        title_frame.pack_propagate(False)
+        
+        title_label = tk.Label(
+            title_frame,
+            text="💬 哈基米聊天室 - 曼波～ (带记忆功能)",
+            font=("微软雅黑", 16, "bold"),
+            bg=self.colors['primary'],
+            fg='#FFFFFF'
+        )
+        title_label.pack(expand=True)
+        
+        # 对话记录区域
+        chat_frame = tk.Frame(chat_win, bg='#FFFFFF')
+        chat_frame.pack(fill='both', expand=True, padx=15, pady=15)
+        
+        # 添加滚动条
+        chat_scrollbar = tk.Scrollbar(chat_frame)
+        chat_scrollbar.pack(side='right', fill='y')
+        
+        # 对话文本框
+        chat_text = tk.Text(
+            chat_frame,
+            font=("微软雅黑", 11),
+            bg='#FFFFFF',
+            fg=self.colors['text'],
+            wrap='word',
+            padx=15,
+            pady=15,
+            yscrollcommand=chat_scrollbar.set,
+            state='disabled'
+        )
+        chat_text.pack(side='left', fill='both', expand=True)
+        chat_scrollbar.config(command=chat_text.yview)
+        
+        # 欢迎消息
+        welcome_msg = "曼波～ 你好呀！我是哈基米！\n有什么想问我的吗？欧耶！💖\n\n💡 你可以问我：\n• 数学计算问题\n• 计算器功能\n• 健康建议\n• 或者随便聊聊天～\n\n🧠 提示：我现在有记忆功能啦！可以记住我们之前聊过的内容～"
+        chat_text.config(state='normal')
+        chat_text.insert('end', f"【哈基米】：{welcome_msg}\n\n", 'hajimi')
+        chat_text.tag_config('hajimi', foreground=self.colors['primary'], font=("微软雅黑", 11, "bold"))
+        chat_text.tag_config('user', foreground=self.colors['secondary_dark'], font=("微软雅黑", 11))
+        chat_text.config(state='disabled')
+        chat_text.see('end')
+        
+        # 输入区域
+        input_frame = tk.Frame(chat_win, bg=self.colors['background'])
+        input_frame.pack(fill='x', padx=15, pady=(15, 5))
+        
+        # 输入框
+        input_entry = tk.Entry(
+            input_frame,
+            font=("微软雅黑", 12),
+            bg='#FFFFFF',
+            fg=self.colors['text'],
+            relief='solid',
+            bd=2
+        )
+        input_entry.pack(side='left', fill='x', expand=True, padx=(0, 5))
+        
+        def send_message(event=None):
+            """发送消息"""
+            user_message = input_entry.get().strip()
+            if not user_message:
+                return
+            
+            # 显示用户消息
+            chat_text.config(state='normal')
+            chat_text.insert('end', f"【你】：{user_message}\n", 'user')
+            chat_text.config(state='disabled')
+            chat_text.see('end')
+            
+            # 清空输入框
+            input_entry.delete(0, 'end')
+            
+            # 播放音效
+            self.hajimi.play_operator_sound()
+            
+            # 显示"正在输入"
+            chat_text.config(state='normal')
+            chat_text.insert('end', "【哈基米】：正在思考...\n", 'hajimi')
+            chat_text.config(state='disabled')
+            chat_text.see('end')
+            chat_win.update()
+            
+            # 构建对话上下文（最近5轮对话）
+            context = ""
+            if conversation_history:
+                # 只取最近5轮对话，避免上下文过长
+                recent_history = conversation_history[-5:]
+                context_parts = []
+                for i, (user_msg, ai_reply) in enumerate(recent_history, 1):
+                    context_parts.append(f"第{i}轮 - 你问：{user_msg}\n哈基米答：{ai_reply}")
+                context = "\n\n".join(context_parts)
+            
+            # 获取AI回复
+            try:
+                reply = self.ai.chat_with_hajimi(user_message, context=context)
+                
+                # 删除"正在思考"
+                chat_text.config(state='normal')
+                last_line_start = chat_text.index("end-2l linestart")
+                chat_text.delete(last_line_start, 'end-1c')
+                
+                # 显示AI回复
+                chat_text.insert('end', f"【哈基米】：{reply}\n\n", 'hajimi')
+                chat_text.config(state='disabled')
+                chat_text.see('end')
+                
+                # 将本轮对话加入历史记录
+                conversation_history.append((user_message, reply))
+                print(f"[对话记录] 用户：{user_message[:30]}... | 哈基米：{reply[:30]}...")
+                print(f"[历史长度] 当前保存了 {len(conversation_history)} 轮对话")
+                
+                # 播放回复音效
+                self.hajimi.play_sound("曼波（可爱.wav")
+                
+            except Exception as e:
+                print(f"对话失败: {e}")
+                chat_text.config(state='normal')
+                last_line_start = chat_text.index("end-2l linestart")
+                chat_text.delete(last_line_start, 'end-1c')
+                error_reply = "曼波～ 出了点小问题，再试一次吧！💦"
+                chat_text.insert('end', f"【哈基米】：{error_reply}\n\n", 'hajimi')
+                chat_text.config(state='disabled')
+                chat_text.see('end')
+                # 即使出错也记录对话
+                conversation_history.append((user_message, error_reply))
+        
+        # 数字键盘区域（初始隐藏）
+        keyboard_frame = tk.Frame(chat_win, bg=self.colors['background'])
+        keyboard_visible = [False]  # 使用列表来存储状态，方便在内部函数中修改
+        
+        def toggle_keyboard():
+            """显示/隐藏数字键盘"""
+            if keyboard_visible[0]:
+                keyboard_frame.pack_forget()
+                keyboard_visible[0] = False
+                keyboard_btn.config(text="🔢 显示键盘")
+            else:
+                keyboard_frame.pack(fill='x', padx=15, pady=(0, 10))
+                keyboard_visible[0] = True
+                keyboard_btn.config(text="🔢 隐藏键盘")
+        
+        def insert_to_entry(text):
+            """将文本插入到输入框的光标位置"""
+            cursor_pos = input_entry.index(tk.INSERT)
+            input_entry.insert(cursor_pos, text)
+            input_entry.focus()
+            # 播放对应音效
+            if text in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']:
+                self.hajimi.play_number_sound(text)
+            elif text in ['+', '-', '×', '÷', '.']:
+                self.hajimi.play_operator_sound(text)
+            else:
+                # 其他按钮（括号等）播放随机运算符音效
+                self.hajimi.play_operator_sound()
+        
+        # 创建数字键盘布局（与主计算器完全一致）
+        def create_chat_keyboard():
+            """创建对话窗口的数字键盘 - 与主计算器设计完全一致"""
+            keyboard_title = tk.Label(
+                keyboard_frame,
+                text="📱 完整计算器键盘",
+                font=("微软雅黑", 11, "bold"),
+                bg=self.colors['background'],
+                fg=self.colors['primary']
+            )
+            keyboard_title.pack(pady=(5, 8))
+            
+            # 创建网格容器
+            grid_frame = tk.Frame(keyboard_frame, bg=self.colors['background'])
+            grid_frame.pack(padx=10, pady=(0, 10))
+            
+            # 配置网格权重
+            for i in range(4):
+                grid_frame.columnconfigure(i, weight=1)
+            for i in range(8):
+                grid_frame.rowconfigure(i, weight=1)
+            
+            # 完整的按钮布局 - 与主计算器相同
+            buttons = [
+                ['sin(', 'cos(', 'tan(', 'sqrt('],
+                ['ln(', 'lg(', 'pi', 'e'],
+                ['AC', '⌫', 'Del', '÷'],
+                ['7', '8', '9', '×'],
+                ['4', '5', '6', '-'],
+                ['1', '2', '3', '+'],
+                ['0', '.', '(', ')'],
+                ['发送', '清空', '%', '=']
+            ]
+            
+            def get_chat_button_style(text):
+                """获取按钮样式 - 与主计算器一致"""
+                if text.isdigit() or text == '.' or text == '0':
+                    return 'number'
+                elif text in ['÷', '×', '-', '+', '(', ')', '%']:
+                    return 'operator'
+                elif text == '=':
+                    return 'equals'
+                elif text in ['sin(', 'cos(', 'tan(', 'sqrt(', 'ln(', 'lg(', 'pi', 'e']:
+                    return 'function'
+                elif text in ['发送', '清空']:
+                    return 'ai_control'
+                else:  # AC, ⌫, Del
+                    return 'control'
+            
+            def create_chat_styled_button(parent, text, style, row, column):
+                """创建样式化按钮 - 与主计算器完全一致"""
+                # 可爱的猫猫粉色主题配色（与主计算器相同）
+                if style == 'number':
+                    bg_color = '#FFE5EC'  # 非常浅的粉色
+                    fg_color = '#8B4789'  # 深紫粉色文字
+                    hover_color = '#FFD1DC'
+                elif style == 'operator':
+                    bg_color = '#FFB3C6'  # 浅粉色
+                    fg_color = '#FFFFFF'
+                    hover_color = '#FF99B3'
+                elif style == 'equals':
+                    bg_color = '#FF6B9D'  # 鲜艳粉色
+                    fg_color = '#FFFFFF'
+                    hover_color = '#FF5287'
+                elif style == 'function':
+                    bg_color = '#E8A5D4'  # 粉紫色
+                    fg_color = '#FFFFFF'
+                    hover_color = '#D98BC4'
+                elif style == 'control':
+                    bg_color = '#C9ADA7'  # 灰粉色
+                    fg_color = '#FFFFFF'
+                    hover_color = '#B39B96'
+                elif style == 'ai_control':
+                    bg_color = '#FF85A2'  # 亮粉色
+                    fg_color = '#FFFFFF'
+                    hover_color = '#FF6B8A'
+                else:
+                    bg_color = '#FFE5EC'
+                    fg_color = '#8B4789'
+                    hover_color = '#FFD1DC'
+                
+                # 创建 Frame 作为按钮容器（macOS 兼容方法）
+                btn_frame = tk.Frame(
+                    parent,
+                    bg=bg_color,
+                    relief='raised',
+                    bd=2,
+                    highlightthickness=0
+                )
+                btn_frame.grid(row=row, column=column, padx=3, pady=3, sticky='nsew')
+                
+                # 创建 Label 作为按钮文字
+                btn_label = tk.Label(
+                    btn_frame,
+                    text=text,
+                    font=("微软雅黑", 11, "bold"),
+                    bg=bg_color,
+                    fg=fg_color,
+                    cursor='hand2',
+                    padx=12,
+                    pady=10
+                )
+                btn_label.pack(fill='both', expand=True)
+                
+                # 悬停效果
+                def on_enter(event):
+                    btn_frame.config(bg=hover_color)
+                    btn_label.config(bg=hover_color)
+                
+                def on_leave(event):
+                    btn_frame.config(bg=bg_color)
+                    btn_label.config(bg=bg_color)
+                
+                def on_press(event):
+                    btn_frame.config(relief='sunken')
+                
+                def on_release(event):
+                    btn_frame.config(relief='raised')
+                    # 处理点击事件
+                    handle_chat_button_click(text)
+                
+                # 绑定事件
+                btn_frame.bind("<Enter>", on_enter)
+                btn_frame.bind("<Leave>", on_leave)
+                btn_frame.bind("<ButtonPress-1>", on_press)
+                btn_frame.bind("<ButtonRelease-1>", on_release)
+                
+                btn_label.bind("<Enter>", on_enter)
+                btn_label.bind("<Leave>", on_leave)
+                btn_label.bind("<ButtonPress-1>", on_press)
+                btn_label.bind("<ButtonRelease-1>", on_release)
+            
+            def handle_chat_button_click(text):
+                """处理键盘按钮点击"""
+                if text == 'AC':
+                    input_entry.delete(0, tk.END)
+                elif text == '⌫':
+                    cursor_pos = input_entry.index(tk.INSERT)
+                    if cursor_pos > 0:
+                        input_entry.delete(cursor_pos - 1)
+                elif text == 'Del':
+                    cursor_pos = input_entry.index(tk.INSERT)
+                    input_entry.delete(cursor_pos)
+                elif text == '发送' or text == '=':
+                    send_message()
+                elif text == '清空':
+                    input_entry.delete(0, tk.END)
+                else:
+                    # 插入文本到光标位置
+                    insert_to_entry(text)
+            
+            # 创建所有按钮
+            for r, row in enumerate(buttons):
+                for c, text in enumerate(row):
+                    style = get_chat_button_style(text)
+                    create_chat_styled_button(grid_frame, text, style, r, c)
+        
+        # 创建键盘（但不显示）
+        create_chat_keyboard()
+        
+        # 键盘切换按钮
+        keyboard_btn = tk.Button(
+            input_frame,
+            text="🔢 显示键盘",
+            font=("微软雅黑", 11, "bold"),
+            bg='#9B59B6',
+            fg='#FFFFFF',
+            relief='raised',
+            bd=2,
+            width=10,
+            command=toggle_keyboard,
+            cursor='hand2'
+        )
+        keyboard_btn.pack(side='left', padx=5)
+        
+        # 发送按钮
+        send_btn = tk.Button(
+            input_frame,
+            text="💬 发送",
+            font=("微软雅黑", 12, "bold"),
+            bg=self.colors['primary'],
+            fg='#FFFFFF',
+            relief='raised',
+            bd=2,
+            width=10,
+            command=send_message,
+            cursor='hand2'
+        )
+        send_btn.pack(side='right')
+        
+        # 绑定Enter键发送
+        input_entry.bind('<Return>', send_message)
+        
+        # 聚焦到输入框
+        input_entry.focus()
+        
+        # 播放欢迎音效
+        self.hajimi.play_sound("曼波欧耶.wav")
     
     

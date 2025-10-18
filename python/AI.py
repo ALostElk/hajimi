@@ -250,3 +250,275 @@ class HajimiAI:
         except Exception as e:
             print(f"AI生成特殊评论失败: {e}")
             return self.get_expression_feedback('default')
+    
+    def generate_bmr_report(self, gender, age, height, weight, bmr, bmi):
+        """生成哈基米风格的BMR健康报告"""
+        if not self.ai_enabled:
+            return self._generate_fallback_bmr_report(gender, age, height, weight, bmr, bmi)
+        
+        try:
+            gender_text = "男生" if gender == "M" else "女生"
+            
+            prompt = f"""
+你是"东海帝皇"哈基米（曼波），一个超级可爱、调皮活泼的健康助手！你的口头禅是"曼波"、"欧耶"、"我嘞个豆"、"哈基米"等。
+
+现在要为用户生成一份健康报告，用户信息：
+- 性别：{gender_text}
+- 年龄：{age}岁
+- 身高：{height}cm
+- 体重：{weight}kg
+- BMR（基础代谢率）：{bmr}大卡/天
+- BMI（身体质量指数）：{bmi}
+
+请用哈基米超级可爱调皮的语气，生成一份详细的健康报告，要求：
+
+1. **开场白**（30字左右）
+   - 用可爱的方式打招呼
+   - 必须包含"曼波"或其他口头禅
+   - 要活泼有趣
+
+2. **数据解读**（100字左右）
+   - 用通俗易懂的方式解释BMR和BMI
+   - 加入可爱的比喻
+   - 语气要俏皮
+
+3. **健康评估**（80字左右）
+   - 评价当前身体状况
+   - 用鼓励和关心的语气
+   - 可以用"曼波觉得..."这样的表达
+
+4. **个性化建议**（200字左右）
+   包含：
+   - 🍽️ 每日热量摄入建议（给出具体数值范围）
+   - 🥗 饮食小贴士（3-4条简短建议）
+   - 💪 运动建议（类型、频率、强度）
+   - 😴 生活习惯建议
+   - 每条建议前加emoji，语气要可爱
+
+5. **特别提醒**（50字左右）
+   - 重要的注意事项
+   - 用关心但不说教的语气
+   - 可以说"曼波提醒你哦～"
+
+6. **结束语**（30字左右）
+   - 鼓励的话语
+   - 必须包含口头禅
+   - 充满正能量
+
+要求：
+- 全文使用第二人称"你"
+- 语气要非常可爱、调皮、活泼
+- 大量使用emoji表情
+- 每段开头可以用"曼波～"、"哈基米～"、"欧耶～"等
+- 专业建议要准确，但表达要可爱
+- 总字数控制在600-700字
+- 使用纯文本格式，不要使用任何Markdown符号（如#、*、-、**等）
+- 用空行分隔段落，用emoji和数字来标识要点
+- 每个部分用可爱的表达方式标识，如"【曼波～ 数据解读】"
+
+请直接输出报告内容，不要添加其他说明：
+"""
+            
+            response = Generation.call(
+                model="qwen-plus",
+                prompt=prompt,
+                temperature=0.7,
+                result_format='message'
+            )
+            
+            report = response['output']['choices'][0]['message']['content'].strip()
+            return report
+            
+        except Exception as e:
+            print(f"AI生成BMR报告失败: {e}")
+            return self._generate_fallback_bmr_report(gender, age, height, weight, bmr, bmi)
+    
+    def _generate_fallback_bmr_report(self, gender, age, height, weight, bmr, bmi):
+        """生成备用的BMR报告（AI失败时使用）"""
+        gender_text = "小哥哥" if gender == "M" else "小姐姐"
+        
+        # BMI评估
+        if bmi < 18.5:
+            bmi_status = "偏瘦"
+            bmi_emoji = "🌱"
+            bmi_advice = "需要适当增重"
+        elif 18.5 <= bmi < 24:
+            bmi_status = "健康"
+            bmi_emoji = "💚"
+            bmi_advice = "保持现状"
+        elif 24 <= bmi < 28:
+            bmi_status = "偏胖"
+            bmi_emoji = "⚠️"
+            bmi_advice = "建议适当减重"
+        else:
+            bmi_status = "肥胖"
+            bmi_emoji = "🚨"
+            bmi_advice = "需要减重"
+        
+        # 计算每日推荐热量
+        if gender == "M":
+            daily_cal = int(bmr * 1.5)
+        else:
+            daily_cal = int(bmr * 1.4)
+        
+        report = f"""
+🎀 曼波～ {gender_text}你好呀！哈基米来了！
+
+欧耶！你的健康数据分析完成啦！让哈基米来告诉你结果吧～
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+【📊 曼波～ 数据解读】
+
+你的BMR是 {bmr}大卡/天，这是什么意思呢？
+
+就是说，即使你整天躺着不动（像哈基米一样懒懒的～），你的身体也需要消耗{bmr}大卡来维持心跳、呼吸、体温等基本生命活动！这就是你身体的"最低能耗"哦！
+
+你的BMI是 {bmi}，身体状况是：{bmi_emoji} {bmi_status}
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+【💪 哈基米～ 健康评估】
+
+哈基米觉得：你的身体状况{bmi_status}哦！{bmi_advice}～
+
+以你{age}岁的年龄，这个代谢率{'挺不错的' if bmr > 1400 else '还可以'}！继续加油！曼波～
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+【🎯 欧耶～ 个性化建议】
+
+🍽️ 饮食建议：
+   每日推荐热量：{daily_cal-200} 到 {daily_cal+200} 大卡
+   🥗 多吃蔬菜水果，营养均衡最重要！
+   🍖 适量蛋白质（鸡蛋、肉类、豆类）
+   💧 每天喝8杯水，约2000ml哦～
+   🍰 少吃高糖高油的零食（虽然很好吃，曼波也爱吃～）
+
+💪 运动建议：
+   类型：{'力量训练+有氧运动' if gender == 'M' else '有氧运动为主'}
+   频率：每周3到5次，每次30到60分钟
+   强度：微微出汗、心跳加快为宜
+   🏃 推荐：快走、慢跑、游泳、骑车都很棒！
+
+😴 生活习惯：
+   每天睡7到9小时，规律作息
+   避免熬夜，11点前睡觉最好
+   保持心情愉快，像哈基米一样开心～欧耶！
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+【⚠️ 曼波提醒你哦～】
+
+🔸 如果要减重，不要节食！会影响代谢的！
+🔸 如果要增肌，记得补充蛋白质～
+🔸 有任何不适，记得看医生哦！
+🔸 健康的速度是每周变化0.5到1kg
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+【🌟 加油鸭！】
+
+哈基米相信你一定可以的！保持健康的身体，享受美好的生活！
+
+曼波～ 我嘞个豆！你最棒啦！💖✨
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+报告生成时间 | {age}岁 | 身高{height}cm | 体重{weight}kg
+"""
+        return report
+    
+    def chat_with_hajimi(self, user_message, context=""):
+        """与哈基米进行对话（曼波主题）"""
+        if not self.ai_enabled:
+            return self._generate_fallback_chat(user_message)
+        
+        try:
+            # 构建上下文部分（避免f-string中使用反斜杠）
+            context_part = ""
+            if context:
+                context_part = f"【之前的对话】：\n{context}\n\n"
+            
+            prompt = f"""
+你是"东海帝皇"哈基米（曼波），一个超级可爱、调皮活泼的计算器助手！
+
+【角色设定】
+- 性格：可爱、调皮、活泼、善良、爱帮助人
+- 口头禅：曼波、欧耶、我嘞个豆、哈基米、阿米诺斯（生气时）
+- 特点：说话经常带"～"，喜欢用emoji，偶尔会撒娇
+- 专长：数学计算、健康建议、陪伴聊天
+
+【对话规则】
+1. 不要总是以"哈基米："开头，可以直接说话
+2. 语气要超级可爱，像真实的朋友聊天
+3. 回答要有帮助，但不要太正经
+4. 每段话必须包含至少1-2个口头禅
+5. 大量使用emoji表情
+6. 如果是数学问题，要给出准确答案
+7. 如果不是计算问题，也要友好回应，可以引导到计算器功能
+8. 长度控制在100字以内（除非是复杂解释）
+9. 如果有上下文，要记住之前的对话内容，能够回答"刚才说的是什么"这类问题
+10. 对于涉及前面提到的内容，要自然地提及，表现出记忆力
+
+{context_part}【当前用户问】：{user_message}
+
+请用哈基米的方式回复用户，记得参考之前的对话内容，直接输出回复内容：
+"""
+            
+            response = Generation.call(
+                model="qwen-plus",
+                prompt=prompt,
+                temperature=0.8,
+                result_format='message'
+            )
+            
+            reply = response['output']['choices'][0]['message']['content'].strip()
+            
+            # 如果回复太短，添加一个可爱的结尾
+            if len(reply) < 20:
+                endings = ["曼波～", "欧耶！", "我嘞个豆！", "哈基米～"]
+                reply += " " + random.choice(endings)
+            
+            return reply
+            
+        except Exception as e:
+            print(f"AI对话生成失败: {e}")
+            return self._generate_fallback_chat(user_message)
+    
+    def _generate_fallback_chat(self, user_message):
+        """生成备用对话回复（AI失败时使用）"""
+        message_lower = user_message.lower()
+        
+        # 数学计算相关
+        if any(word in message_lower for word in ['算', '计算', '等于', '多少', '+', '-', '×', '÷', '*', '/']):
+            return "曼波～ 我是计算助手！你可以直接在计算器上输入算式，我会帮你算哦！试试看吧～欧耶！✨"
+        
+        # 问候
+        if any(word in message_lower for word in ['你好', 'hello', 'hi', '嗨']):
+            return "哈基米～ 你好呀！我是东海帝皇曼波！有什么可以帮你的吗？曼波～ 💖"
+        
+        # 健康相关
+        if any(word in message_lower for word in ['bmr', '健康', '体重', '减肥', '运动']):
+            return "欧耶！想了解健康数据吗？点击「BMR」按钮，我可以帮你计算基础代谢率，还会生成超详细的健康报告哦！曼波～ 💪"
+        
+        # 三角函数
+        if any(word in message_lower for word in ['sin', 'cos', 'tan', '三角']):
+            return "曼波～ 三角函数是我的强项！点击sin、cos、tan按钮，输入角度就行啦！比如sin(30)～ 我嘞个豆！📐"
+        
+        # 功能询问
+        if any(word in message_lower for word in ['功能', '能做', '会什么', '怎么用']):
+            return "哈基米～ 我可厉害啦！可以：\n💙 基础计算（加减乘除）\n💚 科学计算（sin、sqrt、ln）\n💛 健康计算（BMR、BMI）\n💜 还有音效播放器、幸运数字、历史记录！\n曼波～ 快来试试吧！✨"
+        
+        # 夸奖
+        if any(word in message_lower for word in ['可爱', '棒', '厉害', '聪明', '喜欢']):
+            return "哈基米～ 谢谢你！你也超可爱的！我嘞个豆！让我们一起加油吧～欧耶！💖✨"
+        
+        # 默认回复
+        responses = [
+            "曼波～ 有什么我可以帮你的吗？我是计算小助手哦！欧耶！✨",
+            "哈基米～ 我在呢！需要算什么吗？还是想聊聊天？我嘞个豆！💙",
+            "欧耶～ 虽然我不太懂你说的，但我会努力帮你的！曼波～ 要不要试试计算器功能？✨",
+            "曼波曼波～ 我是计算助手哈基米！如果有数学问题尽管问我，其他问题我也会尽力回答哦！💖"
+        ]
+        return random.choice(responses)
