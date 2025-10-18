@@ -95,8 +95,14 @@ class HajimiCharacter:
             for num, filename in number_sounds.items():
                 self._load_sound_to_cache(filename)
             
-            # 预加载功能音效
-            operator_sounds = ['曼波.低.wav', '曼波.中.wav', '曼波.高.wav']
+            # 预加载运算符音效（+、-、×、÷、.）
+            operator_sounds = [
+                '曼波.wav',          # + 号专属
+                '曼波（干脆.wav',    # - 号专属
+                '曼波（可爱.wav',    # × 号专属
+                '曼波↑.wav'          # ÷ 号专属
+                # 哈.wav 已经在数字0中预加载
+            ]
             for filename in operator_sounds:
                 self._load_sound_to_cache(filename)
             
@@ -204,15 +210,33 @@ class HajimiCharacter:
         if sound_file:
             self.play_sound(sound_file)
     
-    def play_operator_sound(self):
-        """播放功能按键对应的音效（随机）"""
+    def play_operator_sound(self, operator=None):
+        """播放运算符对应的音效
+        
+        Args:
+            operator: 运算符字符，如果为None则随机播放
+        """
         if self.mute or self.volume == 0:
             return
         
-        # 功能按键随机音效
-        operator_sounds = ['曼波.低.wav', '曼波.中.wav', '曼波.高.wav']
-        sound_file = random.choice(operator_sounds)
-        self.play_sound(sound_file)
+        # 固定运算符音效映射
+        operator_sounds = {
+            '+': '曼波.wav',
+            '-': '曼波（干脆.wav',
+            '×': '曼波（可爱.wav',
+            '÷': '曼波↑.wav',
+            '.': '哈.wav'
+        }
+        
+        if operator in operator_sounds:
+            # 如果是指定的运算符，播放对应的固定音效
+            sound_file = operator_sounds[operator]
+            self.play_sound(sound_file)
+        else:
+            # 其他功能按键随机播放四种音效之一
+            random_sounds = ['曼波.wav', '曼波（干脆.wav', '曼波（可爱.wav', '曼波↑.wav']
+            sound_file = random.choice(random_sounds)
+            self.play_sound(sound_file)
     
     def play_success_sound(self):
         """播放计算成功的音效（随机）"""
