@@ -1,5 +1,7 @@
 import tkinter as tk
 import math
+import os
+import pygame
 from calculator import Calculator
 from character import HajimiCharacter
 from AI import HajimiAI
@@ -603,6 +605,22 @@ class HajimiUI:
             cursor='hand2'
         )
         self.chat_button.pack(side='left', padx=3)
+        
+        # 背景音乐按钮
+        self.music_button = tk.Button(
+            btn_container,
+            text="🎵 背景音乐",
+            font=("微软雅黑", 10, "bold"),
+            bg='#E91E63',
+            fg='#FFFFFF',
+            relief='raised',
+            bd=2,
+            width=10,
+            height=1,
+            command=self.open_background_music,
+            cursor='hand2'
+        )
+        self.music_button.pack(side='left', padx=3)
     
     def create_button_areas(self):
         """创建按钮区域"""
@@ -1625,8 +1643,8 @@ class HajimiUI:
         # 窗口居中
         win.update_idletasks()
         x = (win.winfo_screenwidth() // 2) - (600 // 2)
-        y = (win.winfo_screenheight() // 2) - (650 // 2)
-        win.geometry(f"600x650+{x}+{y}")
+        y = (win.winfo_screenheight() // 2) - (1000 // 2)
+        win.geometry(f"600x1000+{x}+{y}")
         
         # 设置最小尺寸
         win.minsize(550, 900)
@@ -2440,5 +2458,310 @@ class HajimiUI:
         
         # 播放欢迎音效
         self.hajimi.play_sound("曼波欧耶.wav")
+    
+    def open_background_music(self):
+        """打开背景音乐播放器"""
+        music_win = tk.Toplevel(self.master)
+        music_win.title("🎵 哈基米背景音乐")
+        music_win.geometry("600x500")
+        music_win.configure(bg=self.colors['background'])
+        music_win.resizable(False, False)
+        
+        # 窗口居中
+        music_win.update_idletasks()
+        x = (music_win.winfo_screenwidth() // 2) - (600 // 2)
+        y = (music_win.winfo_screenheight() // 2) - (500 // 2)
+        music_win.geometry(f"600x500+{x}+{y}")
+        
+        # 标题区域
+        title_frame = tk.Frame(music_win, bg=self.colors['primary'], height=60)
+        title_frame.pack(fill='x')
+        title_frame.pack_propagate(False)
+        
+        title_label = tk.Label(
+            title_frame,
+            text="🎵 哈基米背景音乐播放器 🎵",
+            font=("微软雅黑", 16, "bold"),
+            bg=self.colors['primary'],
+            fg='#FFFFFF'
+        )
+        title_label.pack(expand=True)
+        
+        # 主内容区域
+        content_frame = tk.Frame(music_win, bg=self.colors['background'])
+        content_frame.pack(fill='both', expand=True, padx=20, pady=20)
+        
+        # 当前播放状态
+        status_frame = tk.Frame(content_frame, bg='#FFE5EC', relief='solid', bd=2)
+        status_frame.pack(fill='x', pady=10)
+        
+        status_title = tk.Label(
+            status_frame,
+            text="🎶 当前播放状态",
+            font=("微软雅黑", 12, "bold"),
+            bg='#FFE5EC',
+            fg=self.colors['primary_dark']
+        )
+        status_title.pack(pady=8)
+        
+        # 状态显示
+        self.bg_music_status_label = tk.Label(
+            status_frame,
+            text="🎵 暂无播放",
+            font=("微软雅黑", 11),
+            bg='#FFE5EC',
+            fg=self.colors['text'],
+            wraplength=500,
+            justify='center'
+        )
+        self.bg_music_status_label.pack(pady=5)
+        
+        # 音乐文件列表
+        music_files = [
+            ("万恶之源", "万恶之源.WAV"),
+            ("万恶之源2", "万恶之源2.WAV"),
+            ("2.23AM", "2.23AM.WAV"),
+            ("世上最小的哈基米", "世上最小的哈基米.WAV"),
+            ("来去曼波", "来去曼波.WAV"),
+            ("柠檬树上哈基果", "柠檬树上哈基果.WAV"),
+            ("孤高曼波", "孤高曼波.WAV"),
+            ("神曼波", "神曼波.WAV"),
+            ("夜哈", "夜哈.WAV"),
+            ("打火基", "打火基.WAV"),
+            ("野哈飞舞", "野哈飞舞.WAV"),
+            ("曼波、曼波、有时哈基米", "曼波、曼波、有时哈基米.WAV"),
+            ("曼波你身", "曼波你身.WAV"),
+            ("哈基山的基米美如水啊", "哈基山的基米美如水啊.WAV"),
+            ("太空曼波", "太空曼波.WAV"),
+            ("哈雪大冒险", "哈雪大冒险.WAV"),
+            ("最后一哈", "最后一哈.WAV"),
+            ("不再曼波", "不再曼波.WAV"),
+            ("蓝莲哈", "蓝莲哈.WAV"),
+            ("基米说", "基米说.WAV")
+        ]
+        
+        # 歌曲选择区域
+        song_frame = tk.Frame(content_frame, bg=self.colors['background'])
+        song_frame.pack(fill='x', pady=10)
+        
+        song_title = tk.Label(
+            song_frame,
+            text="🎶 选择背景音乐:",
+            font=("微软雅黑", 12, "bold"),
+            bg=self.colors['background'],
+            fg=self.colors['text']
+        )
+        song_title.pack(anchor='w', pady=(0, 5))
+        
+        # 歌曲列表容器（带滚动条）
+        list_container = tk.Frame(song_frame, bg=self.colors['background'])
+        list_container.pack(fill='both', expand=True)
+        
+        # 创建滚动条
+        list_canvas = tk.Canvas(list_container, bg=self.colors['background'], highlightthickness=0)
+        list_scrollbar = tk.Scrollbar(list_container, orient="vertical", command=list_canvas.yview)
+        scrollable_list = tk.Frame(list_canvas, bg=self.colors['background'])
+        
+        scrollable_list.bind(
+            "<Configure>",
+            lambda e: list_canvas.configure(scrollregion=list_canvas.bbox("all"))
+        )
+        
+        list_canvas.create_window((0, 0), window=scrollable_list, anchor="nw")
+        list_canvas.configure(yscrollcommand=list_scrollbar.set)
+        
+        # 创建歌曲列表项
+        for i, (song_name, song_file) in enumerate(music_files):
+            song_item_frame = tk.Frame(scrollable_list, bg='#FFE5F0', relief='raised', bd=1)
+            song_item_frame.pack(fill='x', pady=2, padx=5)
+            
+            # 歌曲信息
+            song_info = tk.Label(
+                song_item_frame,
+                text=f"{i+1}. {song_name}",
+                font=("微软雅黑", 10),
+                bg='#FFE5F0',
+                fg=self.colors['text'],
+                anchor='w'
+            )
+            song_info.pack(side='left', padx=10, pady=5)
+            
+            # 播放按钮
+            play_btn = tk.Button(
+                song_item_frame,
+                text="▶️ 播放",
+                font=("微软雅黑", 8, "bold"),
+                bg=self.colors['primary'],
+                fg='#FFFFFF',
+                relief='raised',
+                bd=1,
+                cursor='hand2',
+                command=lambda f=song_file, n=song_name: self.play_background_music(f, n)
+            )
+            play_btn.pack(side='right', padx=10, pady=3)
+        
+        list_canvas.pack(side="left", fill="both", expand=True)
+        list_scrollbar.pack(side="right", fill="y")
+        
+        # 控制按钮区域
+        control_frame = tk.Frame(content_frame, bg=self.colors['background'])
+        control_frame.pack(fill='x', pady=15)
+        
+        # 播放控制按钮
+        control_buttons_frame = tk.Frame(control_frame, bg=self.colors['background'])
+        control_buttons_frame.pack()
+        
+        # 暂停/继续按钮
+        self.bg_music_pause_btn = tk.Button(
+            control_buttons_frame,
+            text="⏸️ 暂停",
+            font=("微软雅黑", 11, "bold"),
+            bg=self.colors['secondary'],
+            fg='#FFFFFF',
+            relief='raised',
+            bd=2,
+            width=10,
+            command=self.toggle_background_music,
+            cursor='hand2'
+        )
+        self.bg_music_pause_btn.pack(side='left', padx=5)
+        
+        # 停止按钮
+        self.bg_music_stop_btn = tk.Button(
+            control_buttons_frame,
+            text="⏹️ 停止",
+            font=("微软雅黑", 11, "bold"),
+            bg=self.colors['danger'],
+            fg='#FFFFFF',
+            relief='raised',
+            bd=2,
+            width=10,
+            command=self.stop_background_music,
+            cursor='hand2'
+        )
+        self.bg_music_stop_btn.pack(side='left', padx=5)
+        
+        # 音量控制
+        volume_frame = tk.Frame(control_frame, bg=self.colors['background'])
+        volume_frame.pack(pady=10)
+        
+        volume_label = tk.Label(
+            volume_frame,
+            text="🔊 背景音乐音量:",
+            font=("微软雅黑", 10, "bold"),
+            bg=self.colors['background'],
+            fg=self.colors['text']
+        )
+        volume_label.pack()
+        
+        # 音量滑块
+        self.bg_music_volume_scale = tk.Scale(
+            volume_frame,
+            from_=0,
+            to=100,
+            orient='horizontal',
+            bg=self.colors['background'],
+            fg=self.colors['text'],
+            highlightthickness=0,
+            length=300,
+            command=self.set_background_music_volume
+        )
+        self.bg_music_volume_scale.set(30)  # 背景音乐默认音量30%
+        self.bg_music_volume_scale.pack(pady=5)
+        
+        # 关闭按钮
+        close_btn = tk.Button(
+            control_frame,
+            text="关闭",
+            font=("微软雅黑", 11, "bold"),
+            bg=self.colors['text_light'],
+            fg='#FFFFFF',
+            relief='raised',
+            bd=2,
+            width=15,
+            command=music_win.destroy,
+            cursor='hand2'
+        )
+        close_btn.pack(pady=10)
+        
+        # 初始化背景音乐状态
+        self.current_bg_music = None
+        self.is_bg_music_playing = False
+        
+        # 播放欢迎音效
+        self.hajimi.play_sound("曼波欧耶.wav")
+    
+    def play_background_music(self, song_file, song_name):
+        """播放背景音乐"""
+        try:
+            # 停止当前播放
+            if self.current_bg_music:
+                pygame.mixer.music.stop()
+            
+            # 设置新歌曲
+            self.current_bg_music = song_file
+            self.is_bg_music_playing = True
+            
+            # 播放音乐
+            music_path = os.path.join(os.path.dirname(__file__), "../shucai/music", song_file)
+            if os.path.exists(music_path):
+                pygame.mixer.music.load(music_path)
+                # 背景音乐音量较低
+                bg_volume = self.bg_music_volume_scale.get() / 100.0
+                pygame.mixer.music.set_volume(bg_volume)
+                pygame.mixer.music.play(-1)  # 循环播放
+                
+                # 更新状态显示
+                self.bg_music_status_label.config(text=f"🎵 正在播放: {song_name}\n🔄 循环播放模式")
+                
+                # 播放成功音效
+                self.hajimi.play_sound("曼波欧耶.wav")
+            else:
+                self.bg_music_status_label.config(text=f"❌ 文件未找到: {song_file}")
+                
+        except Exception as e:
+            print(f"播放背景音乐失败: {e}")
+            self.bg_music_status_label.config(text=f"❌ 播放失败: {str(e)}")
+    
+    def toggle_background_music(self):
+        """切换背景音乐播放/暂停状态"""
+        if not self.current_bg_music:
+            return
+            
+        try:
+            if self.is_bg_music_playing:
+                # 当前正在播放，暂停
+                pygame.mixer.music.pause()
+                self.is_bg_music_playing = False
+                self.bg_music_pause_btn.config(text="▶️ 继续")
+                self.bg_music_status_label.config(text=self.bg_music_status_label.cget('text').replace("正在播放", "已暂停"))
+            else:
+                # 当前暂停，继续播放
+                pygame.mixer.music.unpause()
+                self.is_bg_music_playing = True
+                self.bg_music_pause_btn.config(text="⏸️ 暂停")
+                self.bg_music_status_label.config(text=self.bg_music_status_label.cget('text').replace("已暂停", "正在播放"))
+        except Exception as e:
+            print(f"切换背景音乐状态失败: {e}")
+    
+    def stop_background_music(self):
+        """停止背景音乐播放"""
+        try:
+            pygame.mixer.music.stop()
+            self.current_bg_music = None
+            self.is_bg_music_playing = False
+            self.bg_music_status_label.config(text="🎵 暂无播放")
+            self.bg_music_pause_btn.config(text="⏸️ 暂停")
+        except Exception as e:
+            print(f"停止背景音乐失败: {e}")
+    
+    def set_background_music_volume(self, volume):
+        """设置背景音乐音量"""
+        try:
+            volume_float = int(volume) / 100.0
+            pygame.mixer.music.set_volume(volume_float)
+        except Exception as e:
+            print(f"设置背景音乐音量失败: {e}")
+    
     
     
