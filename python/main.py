@@ -17,7 +17,7 @@ try:
         # 创建主窗口 - 优化尺寸和布局
         root = tk.Tk()
         root.title("哈基米计算器")
-        root.geometry("650x750")  # 增加宽度以显示所有按钮
+        root.geometry("650x950")  # 增加宽度以显示所有按钮
         root.resizable(True, True)
         
         # 设置窗口最小尺寸

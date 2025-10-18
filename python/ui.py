@@ -1612,7 +1612,7 @@ class HajimiUI:
         """打开BMR计算窗口 - 重新设计的简化版本"""
         win = tk.Toplevel(self.master)
         win.title("🏥 哈基米健康数据计算器")
-        win.geometry("500x650")  # 增大窗口尺寸
+        win.geometry("600x1000")  # 增大窗口尺寸
         win.configure(bg=self.colors['background'])
         win.resizable(True, True)  # 允许调整大小
         
@@ -1624,12 +1624,12 @@ class HajimiUI:
         
         # 窗口居中
         win.update_idletasks()
-        x = (win.winfo_screenwidth() // 2) - (500 // 2)
+        x = (win.winfo_screenwidth() // 2) - (600 // 2)
         y = (win.winfo_screenheight() // 2) - (650 // 2)
-        win.geometry(f"500x650+{x}+{y}")
+        win.geometry(f"600x650+{x}+{y}")
         
         # 设置最小尺寸
-        win.minsize(450, 600)
+        win.minsize(550, 900)
         
         # 标题区域
         title_frame = tk.Frame(win, bg=self.colors['background'])
@@ -1984,15 +1984,15 @@ class HajimiUI:
         """显示BMR健康报告窗口"""
         report_win = tk.Toplevel(self.master)
         report_win.title("🎨 哈基米专属健康报告")
-        report_win.geometry("700x800")
+        report_win.geometry("800x800")
         report_win.configure(bg=self.colors['background'])
         report_win.resizable(True, True)
         
         # 窗口居中
         report_win.update_idletasks()
-        x = (report_win.winfo_screenwidth() // 2) - (700 // 2)
+        x = (report_win.winfo_screenwidth() // 2) - (800 // 2)
         y = (report_win.winfo_screenheight() // 2) - (800 // 2)
-        report_win.geometry(f"700x800+{x}+{y}")
+        report_win.geometry(f"800x800+{x}+{y}")
         
         # 标题
         title_frame = tk.Frame(report_win, bg=self.colors['primary'], height=80)

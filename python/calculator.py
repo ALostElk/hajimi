@@ -255,15 +255,32 @@ class Calculator:
                 bmr_advice = "哈基米：曼波！代谢率很高，身体躺平时都这么努力！🔥"
                 level = "high"
             
-            # 组合BMR和BMI信息
-            if bmi is not None:
-                msg = f"📊 健康数据报告\n\n"
-                msg += f"🔥 BMR = {bmr_rounded} kcal/天\n{bmr_advice}\n\n"
-                msg += f"⚖️ {bmi_msg}"
-            else:
-                msg = f"BMR = {bmr_rounded} kcal/天\n\n{bmr_advice}"
-            
-            return bmr, msg
+            # 使用AI生成个性化健康报告
+            try:
+                # 尝试导入AI模块
+                from AI import HajimiAI
+                ai = HajimiAI()
+                ai_report = ai.generate_health_report(bmr, bmi, age, gender, height, weight)
+                return bmr, ai_report
+            except ImportError:
+                # 如果AI模块不可用，使用基础报告
+                if bmi is not None:
+                    msg = f"📊 健康数据报告\n\n"
+                    msg += f"🔥 BMR = {bmr_rounded} kcal/天\n{bmr_advice}\n\n"
+                    msg += f"⚖️ {bmi_msg}"
+                else:
+                    msg = f"BMR = {bmr_rounded} kcal/天\n\n{bmr_advice}"
+                return bmr, msg
+            except Exception as e:
+                # AI生成失败时的备用方案
+                print(f"AI健康报告生成失败: {e}")
+                if bmi is not None:
+                    msg = f"📊 健康数据报告\n\n"
+                    msg += f"🔥 BMR = {bmr_rounded} kcal/天\n{bmr_advice}\n\n"
+                    msg += f"⚖️ {bmi_msg}"
+                else:
+                    msg = f"BMR = {bmr_rounded} kcal/天\n\n{bmr_advice}"
+                return bmr, msg
             
         except ValueError:
             return None, "哈基米：请输入有效的数字！"
@@ -321,13 +338,14 @@ if __name__ == "__main__":
     print(bmi_msg)
     
     print("\n" + "=" * 50)
-    print("BMR 测试")
+    print("AI健康报告测试")
     print("=" * 50)
     
-    # 测试BMR计算
+    # 测试AI健康报告生成
     bmr, msg = calc.calculate_bmr('M', 25, 175, 70)
     print(f"\n男性，25岁，175cm，70kg:")
     print(msg)
+    print("\n" + "-" * 30)
     
     bmr, msg = calc.calculate_bmr('F', 23, 165, 55)
     print(f"\n女性，23岁，165cm，55kg:")
