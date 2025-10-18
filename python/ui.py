@@ -1,7 +1,9 @@
 import tkinter as tk
 import math
+import json
 import os
 import pygame
+from datetime import datetime
 from calculator import Calculator
 from character import HajimiCharacter
 from AI import HajimiAI
@@ -21,9 +23,18 @@ class HajimiUI:
         self.hajimi = HajimiCharacter()
         self.ai = HajimiAI()
         
-        # 计算历史记录 (最多保存10条)
-        self.calc_history = []
-        self.max_history = 10
+        # 数据持久化路径
+        self.data_dir = "data"
+        self.history_file = os.path.join(self.data_dir, "calculation_history.json")
+        self.chat_history_file = os.path.join(self.data_dir, "chat_history.json")
+        
+        # 确保data目录存在
+        os.makedirs(self.data_dir, exist_ok=True)
+        
+        # 计算历史记录 (最多保存100条，从文件加载)
+        self.max_history = 100
+        self.calc_history = self._load_calculation_history()
+        print(f"加载了 {len(self.calc_history)} 条历史记录")
 
         # 哈基米主题色彩 - 双色调圆润配色
         self.colors = {
@@ -1457,6 +1468,9 @@ class HajimiUI:
         if len(self.calc_history) > self.max_history:
             self.calc_history = self.calc_history[:self.max_history]
         
+        # 保存历史记录到文件
+        self._save_calculation_history()
+        
         # 更新历史记录显示（如果窗口存在）
         if hasattr(self, 'history_window') and self.history_window.winfo_exists():
             self.update_history_display()
@@ -1599,9 +1613,13 @@ class HajimiUI:
                 )
                 result_label.pack(anchor='w', padx=15, pady=(0, 5))
                 
-                # 点击加载按钮
+                # 按钮区域
+                btn_frame = tk.Frame(history_frame, bg='#FFE5F0')
+                btn_frame.pack(anchor='e', padx=10, pady=5)
+                
+                # 加载按钮
                 load_btn = tk.Button(
-                    history_frame,
+                    btn_frame,
                     text="📝 加载",
                     font=("微软雅黑", 9),
                     bg=self.colors['secondary'],
@@ -1611,7 +1629,21 @@ class HajimiUI:
                     cursor='hand2',
                     command=lambda e=item['expression']: self.load_from_history(e)
                 )
-                load_btn.pack(anchor='e', padx=10, pady=5)
+                load_btn.pack(side='left', padx=2)
+                
+                # 删除按钮
+                delete_btn = tk.Button(
+                    btn_frame,
+                    text="🗑️ 删除",
+                    font=("微软雅黑", 9),
+                    bg='#FF6B6B',
+                    fg='#FFFFFF',
+                    relief='raised',
+                    bd=1,
+                    cursor='hand2',
+                    command=lambda idx=i: self.delete_history_item(idx)
+                )
+                delete_btn.pack(side='left', padx=2)
     
     def load_from_history(self, expression):
         """从历史记录加载表达式"""
@@ -1620,11 +1652,84 @@ class HajimiUI:
         if hasattr(self, 'history_window') and self.history_window.winfo_exists():
             self.history_window.destroy()
     
+    def delete_history_item(self, index):
+        """删除单个历史记录"""
+        if 0 <= index < len(self.calc_history):
+            del self.calc_history[index]
+            self._save_calculation_history()
+            self.update_history_display()
+            self.hajimi.play_sound("曼波duang.wav")
+    
     def clear_history(self):
         """清空历史记录"""
         self.calc_history = []
+        self._save_calculation_history()  # 保存清空后的历史
         self.update_history_display()
         self.hajimi.play_sound("曼波duang.wav")
+    
+    def _load_calculation_history(self):
+        """从文件加载计算历史记录"""
+        try:
+            if os.path.exists(self.history_file):
+                with open(self.history_file, 'r', encoding='utf-8') as f:
+                    history = json.load(f)
+                    print(f"成功加载历史记录：{len(history)} 条")
+                    return history
+            else:
+                print("历史记录文件不存在，创建新的历史记录")
+                return []
+        except Exception as e:
+            print(f"加载历史记录失败: {e}")
+            return []
+    
+    def _save_calculation_history(self):
+        """保存计算历史记录到文件"""
+        try:
+            with open(self.history_file, 'w', encoding='utf-8') as f:
+                json.dump(self.calc_history, f, ensure_ascii=False, indent=2)
+            print(f"成功保存 {len(self.calc_history)} 条历史记录")
+        except Exception as e:
+            print(f"保存历史记录失败: {e}")
+    
+    def _load_chat_history(self):
+        """从文件加载对话历史记录（会话模式）"""
+        try:
+            if os.path.exists(self.chat_history_file):
+                with open(self.chat_history_file, 'r', encoding='utf-8') as f:
+                    history = json.load(f)
+                    
+                    # 兼容旧格式：如果是旧的列表格式，转换为会话格式
+                    if history and isinstance(history, list):
+                        if isinstance(history[0], list):  # 旧格式 [[user, ai], ...]
+                            print("检测到旧格式历史，转换为会话模式")
+                            import time
+                            old_session = {
+                                "id": f"session_{int(time.time())}",
+                                "title": "历史对话记录",
+                                "start_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                                "messages": history
+                            }
+                            history = [old_session]
+                    
+                    print(f"成功加载对话历史：{len(history)} 个会话")
+                    return history
+            else:
+                print("对话历史文件不存在，创建新的对话历史")
+                return []
+        except Exception as e:
+            print(f"加载对话历史失败: {e}")
+            return []
+    
+    def _save_chat_history(self, sessions):
+        """保存对话历史记录到文件（会话模式）"""
+        try:
+            # 只保存最近30个会话
+            sessions_to_save = sessions[-30:] if len(sessions) > 30 else sessions
+            with open(self.chat_history_file, 'w', encoding='utf-8') as f:
+                json.dump(sessions_to_save, f, ensure_ascii=False, indent=2)
+            print(f"成功保存 {len(sessions_to_save)} 个对话会话")
+        except Exception as e:
+            print(f"保存对话历史失败: {e}")
 
     def open_bmr_window(self):
         """打开BMR计算窗口 - 重新设计的简化版本"""
@@ -2085,35 +2190,59 @@ class HajimiUI:
         self.hajimi.play_sound("帝皇私人笑声.wav")
     
     def open_chat_window(self):
-        """打开与哈基米的对话窗口"""
+        """打开与哈基米的对话窗口（会话管理模式）"""
+        import time
+        
         chat_win = tk.Toplevel(self.master)
         chat_win.title("💬 与哈基米对话")
-        chat_win.geometry("600x700")
+        chat_win.geometry("600x750")
         chat_win.configure(bg=self.colors['background'])
         chat_win.resizable(True, True)
         
         # 窗口居中
         chat_win.update_idletasks()
         x = (chat_win.winfo_screenwidth() // 2) - (600 // 2)
-        y = (chat_win.winfo_screenheight() // 2) - (700 // 2)
-        chat_win.geometry(f"600x700+{x}+{y}")
+        y = (chat_win.winfo_screenheight() // 2) - (750 // 2)
+        chat_win.geometry(f"600x750+{x}+{y}")
         
-        # 对话历史记录（保持记忆功能）
-        conversation_history = []
+        # 加载所有会话历史
+        all_sessions = self._load_chat_history()
+        
+        # 当前会话（如果有会话就用最后一个，没有就创建新的）
+        if all_sessions and len(all_sessions) > 0:
+            current_session = all_sessions[-1]  # 最后一个会话
+        else:
+            # 创建第一个会话
+            current_session = {
+                "id": f"session_{int(time.time())}",
+                "title": "新的对话",
+                "start_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "messages": []
+            }
+            all_sessions.append(current_session)
         
         # 标题栏
-        title_frame = tk.Frame(chat_win, bg=self.colors['primary'], height=70)
+        title_frame = tk.Frame(chat_win, bg=self.colors['primary'], height=80)
         title_frame.pack(fill='x')
         title_frame.pack_propagate(False)
         
-        title_label = tk.Label(
+        session_title_label = tk.Label(
             title_frame,
-            text="💬 哈基米聊天室 - 曼波～ (带记忆功能)",
-            font=("微软雅黑", 16, "bold"),
+            text=f"💬 {current_session['title']}",
+            font=("微软雅黑", 14, "bold"),
             bg=self.colors['primary'],
             fg='#FFFFFF'
         )
-        title_label.pack(expand=True)
+        session_title_label.pack(pady=(8, 2))
+        
+        session_info_label = tk.Label(
+            title_frame,
+            text=f"🕒 {current_session['start_time']}  |  📊 共{len(current_session['messages'])}条消息",
+            font=("微软雅黑", 10),
+            bg=self.colors['primary'],
+            fg='#FFEEEE'
+        )
+        session_info_label.pack()
         
         # 对话记录区域
         chat_frame = tk.Frame(chat_win, bg='#FFFFFF')
@@ -2138,14 +2267,35 @@ class HajimiUI:
         chat_text.pack(side='left', fill='both', expand=True)
         chat_scrollbar.config(command=chat_text.yview)
         
-        # 欢迎消息
-        welcome_msg = "曼波～ 你好呀！我是哈基米！\n有什么想问我的吗？欧耶！💖\n\n💡 你可以问我：\n• 数学计算问题\n• 计算器功能\n• 健康建议\n• 或者随便聊聊天～\n\n🧠 提示：我现在有记忆功能啦！可以记住我们之前聊过的内容～"
-        chat_text.config(state='normal')
-        chat_text.insert('end', f"【哈基米】：{welcome_msg}\n\n", 'hajimi')
+        # 配置标签样式
         chat_text.tag_config('hajimi', foreground=self.colors['primary'], font=("微软雅黑", 11, "bold"))
         chat_text.tag_config('user', foreground=self.colors['secondary_dark'], font=("微软雅黑", 11))
-        chat_text.config(state='disabled')
-        chat_text.see('end')
+        chat_text.tag_config('system', foreground='#999999', font=("微软雅黑", 10, "italic"))
+        
+        def refresh_chat_display():
+            """刷新对话显示"""
+            chat_text.config(state='normal')
+            chat_text.delete('1.0', tk.END)
+            
+            # 显示当前会话的所有消息
+            if current_session['messages']:
+                for user_msg, ai_reply in current_session['messages']:
+                    chat_text.insert('end', f"【你】：{user_msg}\n", 'user')
+                    chat_text.insert('end', f"【哈基米】：{ai_reply}\n\n", 'hajimi')
+            else:
+                # 显示欢迎消息
+                welcome_msg = "曼波～ 你好呀！我是哈基米！\n有什么想问我的吗？欧耶！💖\n\n💡 你可以问我：\n• 数学计算问题\n• 计算器功能\n• 健康建议\n• 或者随便聊聊天～\n\n🧠 提示：我现在有记忆功能啦！可以记住我们之前聊过的内容～"
+                chat_text.insert('end', f"【哈基米】：{welcome_msg}\n\n", 'hajimi')
+            
+            chat_text.config(state='disabled')
+            chat_text.see('end')
+            
+            # 更新会话信息
+            session_title_label.config(text=f"💬 {current_session['title']}")
+            session_info_label.config(text=f"🕒 {current_session['start_time']}  |  📊 共{len(current_session['messages'])}条消息")
+        
+        # 初始显示
+        refresh_chat_display()
         
         # 输入区域
         input_frame = tk.Frame(chat_win, bg=self.colors['background'])
@@ -2164,9 +2314,16 @@ class HajimiUI:
         
         def send_message(event=None):
             """发送消息"""
+            nonlocal current_session, all_sessions
+            
             user_message = input_entry.get().strip()
             if not user_message:
                 return
+            
+            # 如果是新会话的第一条消息，用它作为会话标题
+            if len(current_session['messages']) == 0:
+                title_preview = user_message[:15] + "..." if len(user_message) > 15 else user_message
+                current_session['title'] = title_preview
             
             # 显示用户消息
             chat_text.config(state='normal')
@@ -2187,11 +2344,10 @@ class HajimiUI:
             chat_text.see('end')
             chat_win.update()
             
-            # 构建对话上下文（最近5轮对话）
+            # 构建对话上下文（使用当前会话的最近5轮对话）
             context = ""
-            if conversation_history:
-                # 只取最近5轮对话，避免上下文过长
-                recent_history = conversation_history[-5:]
+            if current_session['messages']:
+                recent_history = current_session['messages'][-5:]
                 context_parts = []
                 for i, (user_msg, ai_reply) in enumerate(recent_history, 1):
                     context_parts.append(f"第{i}轮 - 你问：{user_msg}\n哈基米答：{ai_reply}")
@@ -2211,10 +2367,16 @@ class HajimiUI:
                 chat_text.config(state='disabled')
                 chat_text.see('end')
                 
-                # 将本轮对话加入历史记录
-                conversation_history.append((user_message, reply))
-                print(f"[对话记录] 用户：{user_message[:30]}... | 哈基米：{reply[:30]}...")
-                print(f"[历史长度] 当前保存了 {len(conversation_history)} 轮对话")
+                # 将本轮对话加入当前会话
+                current_session['messages'].append([user_message, reply])
+                print(f"[会话 {current_session['id']}] 用户：{user_message[:20]}... | 哈基米：{reply[:20]}...")
+                print(f"[会话统计] 当前会话共 {len(current_session['messages'])} 轮对话")
+                
+                # 更新会话信息显示
+                session_info_label.config(text=f"🕒 {current_session['start_time']}  |  📊 共{len(current_session['messages'])}条消息")
+                
+                # 保存所有会话到文件
+                self._save_chat_history(all_sessions)
                 
                 # 播放回复音效
                 self.hajimi.play_sound("曼波（可爱.wav")
@@ -2229,11 +2391,13 @@ class HajimiUI:
                 chat_text.config(state='disabled')
                 chat_text.see('end')
                 # 即使出错也记录对话
-                conversation_history.append((user_message, error_reply))
+                current_session['messages'].append([user_message, error_reply])
+                # 保存会话
+                self._save_chat_history(all_sessions)
         
         # 数字键盘区域（初始隐藏）
         keyboard_frame = tk.Frame(chat_win, bg=self.colors['background'])
-        keyboard_visible = [False]  # 使用列表来存储状态，方便在内部函数中修改
+        keyboard_visible = [False]
         
         def toggle_keyboard():
             """显示/隐藏数字键盘"""
@@ -2257,12 +2421,11 @@ class HajimiUI:
             elif text in ['+', '-', '×', '÷', '.']:
                 self.hajimi.play_operator_sound(text)
             else:
-                # 其他按钮（括号等）播放随机运算符音效
                 self.hajimi.play_operator_sound()
         
         # 创建数字键盘布局（与主计算器完全一致）
         def create_chat_keyboard():
-            """创建对话窗口的数字键盘 - 与主计算器设计完全一致"""
+            """创建对话窗口的数字键盘"""
             keyboard_title = tk.Label(
                 keyboard_frame,
                 text="📱 完整计算器键盘",
@@ -2272,17 +2435,14 @@ class HajimiUI:
             )
             keyboard_title.pack(pady=(5, 8))
             
-            # 创建网格容器
             grid_frame = tk.Frame(keyboard_frame, bg=self.colors['background'])
             grid_frame.pack(padx=10, pady=(0, 10))
             
-            # 配置网格权重
             for i in range(4):
                 grid_frame.columnconfigure(i, weight=1)
             for i in range(8):
                 grid_frame.rowconfigure(i, weight=1)
             
-            # 完整的按钮布局 - 与主计算器相同
             buttons = [
                 ['sin(', 'cos(', 'tan(', 'sqrt('],
                 ['ln(', 'lg(', 'pi', 'e'],
@@ -2295,7 +2455,6 @@ class HajimiUI:
             ]
             
             def get_chat_button_style(text):
-                """获取按钮样式 - 与主计算器一致"""
                 if text.isdigit() or text == '.' or text == '0':
                     return 'number'
                 elif text in ['÷', '×', '-', '+', '(', ')', '%']:
@@ -2306,94 +2465,56 @@ class HajimiUI:
                     return 'function'
                 elif text in ['发送', '清空']:
                     return 'ai_control'
-                else:  # AC, ⌫, Del
+                else:
                     return 'control'
             
             def create_chat_styled_button(parent, text, style, row, column):
-                """创建样式化按钮 - 与主计算器完全一致"""
-                # 可爱的猫猫粉色主题配色（与主计算器相同）
                 if style == 'number':
-                    bg_color = '#FFE5EC'  # 非常浅的粉色
-                    fg_color = '#8B4789'  # 深紫粉色文字
-                    hover_color = '#FFD1DC'
+                    bg_color, fg_color, hover_color = '#FFE5EC', '#8B4789', '#FFD1DC'
                 elif style == 'operator':
-                    bg_color = '#FFB3C6'  # 浅粉色
-                    fg_color = '#FFFFFF'
-                    hover_color = '#FF99B3'
+                    bg_color, fg_color, hover_color = '#FFB3C6', '#FFFFFF', '#FF99B3'
                 elif style == 'equals':
-                    bg_color = '#FF6B9D'  # 鲜艳粉色
-                    fg_color = '#FFFFFF'
-                    hover_color = '#FF5287'
+                    bg_color, fg_color, hover_color = '#FF6B9D', '#FFFFFF', '#FF5287'
                 elif style == 'function':
-                    bg_color = '#E8A5D4'  # 粉紫色
-                    fg_color = '#FFFFFF'
-                    hover_color = '#D98BC4'
+                    bg_color, fg_color, hover_color = '#E8A5D4', '#FFFFFF', '#D98BC4'
                 elif style == 'control':
-                    bg_color = '#C9ADA7'  # 灰粉色
-                    fg_color = '#FFFFFF'
-                    hover_color = '#B39B96'
+                    bg_color, fg_color, hover_color = '#C9ADA7', '#FFFFFF', '#B39B96'
                 elif style == 'ai_control':
-                    bg_color = '#FF85A2'  # 亮粉色
-                    fg_color = '#FFFFFF'
-                    hover_color = '#FF6B8A'
+                    bg_color, fg_color, hover_color = '#FF85A2', '#FFFFFF', '#FF6B8A'
                 else:
-                    bg_color = '#FFE5EC'
-                    fg_color = '#8B4789'
-                    hover_color = '#FFD1DC'
+                    bg_color, fg_color, hover_color = '#FFE5EC', '#8B4789', '#FFD1DC'
                 
-                # 创建 Frame 作为按钮容器（macOS 兼容方法）
-                btn_frame = tk.Frame(
-                    parent,
-                    bg=bg_color,
-                    relief='raised',
-                    bd=2,
-                    highlightthickness=0
-                )
+                btn_frame = tk.Frame(parent, bg=bg_color, relief='raised', bd=2, highlightthickness=0)
                 btn_frame.grid(row=row, column=column, padx=3, pady=3, sticky='nsew')
                 
-                # 创建 Label 作为按钮文字
                 btn_label = tk.Label(
-                    btn_frame,
-                    text=text,
-                    font=("微软雅黑", 11, "bold"),
-                    bg=bg_color,
-                    fg=fg_color,
-                    cursor='hand2',
-                    padx=12,
-                    pady=10
+                    btn_frame, text=text, font=("微软雅黑", 11, "bold"),
+                    bg=bg_color, fg=fg_color, cursor='hand2', padx=12, pady=10
                 )
                 btn_label.pack(fill='both', expand=True)
                 
-                # 悬停效果
-                def on_enter(event):
+                def on_enter(e):
                     btn_frame.config(bg=hover_color)
                     btn_label.config(bg=hover_color)
                 
-                def on_leave(event):
+                def on_leave(e):
                     btn_frame.config(bg=bg_color)
                     btn_label.config(bg=bg_color)
                 
-                def on_press(event):
+                def on_press(e):
                     btn_frame.config(relief='sunken')
                 
-                def on_release(event):
+                def on_release(e):
                     btn_frame.config(relief='raised')
-                    # 处理点击事件
                     handle_chat_button_click(text)
                 
-                # 绑定事件
-                btn_frame.bind("<Enter>", on_enter)
-                btn_frame.bind("<Leave>", on_leave)
-                btn_frame.bind("<ButtonPress-1>", on_press)
-                btn_frame.bind("<ButtonRelease-1>", on_release)
-                
-                btn_label.bind("<Enter>", on_enter)
-                btn_label.bind("<Leave>", on_leave)
-                btn_label.bind("<ButtonPress-1>", on_press)
-                btn_label.bind("<ButtonRelease-1>", on_release)
+                for widget in [btn_frame, btn_label]:
+                    widget.bind("<Enter>", on_enter)
+                    widget.bind("<Leave>", on_leave)
+                    widget.bind("<ButtonPress-1>", on_press)
+                    widget.bind("<ButtonRelease-1>", on_release)
             
             def handle_chat_button_click(text):
-                """处理键盘按钮点击"""
                 if text == 'AC':
                     input_entry.delete(0, tk.END)
                 elif text == '⌫':
@@ -2408,47 +2529,217 @@ class HajimiUI:
                 elif text == '清空':
                     input_entry.delete(0, tk.END)
                 else:
-                    # 插入文本到光标位置
                     insert_to_entry(text)
             
-            # 创建所有按钮
             for r, row in enumerate(buttons):
                 for c, text in enumerate(row):
                     style = get_chat_button_style(text)
                     create_chat_styled_button(grid_frame, text, style, r, c)
         
-        # 创建键盘（但不显示）
         create_chat_keyboard()
         
         # 键盘切换按钮
         keyboard_btn = tk.Button(
-            input_frame,
-            text="🔢 显示键盘",
-            font=("微软雅黑", 11, "bold"),
-            bg='#9B59B6',
-            fg='#FFFFFF',
-            relief='raised',
-            bd=2,
-            width=10,
-            command=toggle_keyboard,
-            cursor='hand2'
+            input_frame, text="🔢 显示键盘", font=("微软雅黑", 11, "bold"),
+            bg='#9B59B6', fg='#FFFFFF', relief='raised', bd=2,
+            width=10, command=toggle_keyboard, cursor='hand2'
         )
         keyboard_btn.pack(side='left', padx=5)
         
         # 发送按钮
         send_btn = tk.Button(
-            input_frame,
-            text="💬 发送",
-            font=("微软雅黑", 12, "bold"),
-            bg=self.colors['primary'],
-            fg='#FFFFFF',
-            relief='raised',
-            bd=2,
-            width=10,
-            command=send_message,
-            cursor='hand2'
+            input_frame, text="💬 发送", font=("微软雅黑", 12, "bold"),
+            bg=self.colors['primary'], fg='#FFFFFF', relief='raised', bd=2,
+            width=10, command=send_message, cursor='hand2'
         )
         send_btn.pack(side='right')
+        
+        # 会话管理按钮区域
+        session_manage_frame = tk.Frame(chat_win, bg=self.colors['background'])
+        session_manage_frame.pack(fill='x', padx=15, pady=(0, 10))
+        
+        def new_session():
+            """开启新的对话会话"""
+            nonlocal current_session, all_sessions
+            
+            # 创建新会话
+            new_sess = {
+                "id": f"session_{int(time.time())}",
+                "title": "新的对话",
+                "start_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "messages": []
+            }
+            all_sessions.append(new_sess)
+            current_session = new_sess
+            
+            # 保存
+            self._save_chat_history(all_sessions)
+            
+            # 刷新显示
+            refresh_chat_display()
+            
+            # 提示
+            chat_text.config(state='normal')
+            chat_text.insert('1.0', "【系统】：🆕 已开启新的对话会话！\n\n", 'system')
+            chat_text.config(state='disabled')
+            
+            # 播放音效
+            self.hajimi.play_sound("曼波欧耶.wav")
+            print(f"[新会话] 创建会话 {new_sess['id']}")
+        
+        def view_sessions():
+            """查看所有会话"""
+            nonlocal current_session, all_sessions
+            
+            if not all_sessions:
+                chat_text.config(state='normal')
+                chat_text.insert('end', "【系统】：还没有历史会话哦～\n\n", 'system')
+                chat_text.config(state='disabled')
+                chat_text.see('end')
+                return
+            
+            # 创建会话列表窗口
+            session_win = tk.Toplevel(chat_win)
+            session_win.title("📚 会话历史")
+            session_win.geometry("600x600")
+            session_win.configure(bg=self.colors['background'])
+            
+            title_label = tk.Label(
+                session_win,
+                text=f"📚 历史会话 (共{len(all_sessions)}个)",
+                font=("微软雅黑", 14, "bold"),
+                bg=self.colors['background'],
+                fg=self.colors['primary']
+            )
+            title_label.pack(pady=10)
+            
+            # 会话列表
+            list_frame = tk.Frame(session_win, bg=self.colors['background'])
+            list_frame.pack(fill='both', expand=True, padx=15, pady=10)
+            
+            scrollbar = tk.Scrollbar(list_frame)
+            scrollbar.pack(side='right', fill='y')
+            
+            session_listbox = tk.Listbox(
+                list_frame, font=("微软雅黑", 10), bg='#FFFFFF',
+                yscrollcommand=scrollbar.set, selectmode=tk.SINGLE
+            )
+            session_listbox.pack(side='left', fill='both', expand=True)
+            scrollbar.config(command=session_listbox.yview)
+            
+            # 填充会话列表
+            for i, sess in enumerate(all_sessions, 1):
+                msg_count = len(sess['messages'])
+                session_listbox.insert(tk.END, f"{i}. {sess['title']} ({msg_count}条消息) - {sess['start_time']}")
+            
+            # 详情显示区域
+            detail_frame = tk.Frame(session_win, bg=self.colors['background'])
+            detail_frame.pack(fill='both', expand=True, padx=15, pady=10)
+            
+            detail_text = tk.Text(
+                detail_frame, font=("微软雅黑", 9), bg='#FFF8F8',
+                fg=self.colors['text'], wrap='word', height=8, state='disabled'
+            )
+            detail_text.pack(fill='both', expand=True)
+            
+            def show_session_detail(event):
+                """显示会话详情"""
+                selection = session_listbox.curselection()
+                if selection:
+                    index = selection[0]
+                    sess = all_sessions[index]
+                    detail_text.config(state='normal')
+                    detail_text.delete('1.0', tk.END)
+                    detail_text.insert('end', f"📋 {sess['title']}\n")
+                    detail_text.insert('end', f"🆔 {sess['id']}\n")
+                    detail_text.insert('end', f"🕒 {sess['start_time']}\n")
+                    detail_text.insert('end', f"💬 共{len(sess['messages'])}轮对话\n\n")
+                    
+                    if sess['messages']:
+                        detail_text.insert('end', "━━━ 对话内容预览 ━━━\n")
+                        for j, (u, a) in enumerate(sess['messages'][:3], 1):
+                            detail_text.insert('end', f"{j}. 你：{u[:40]}...\n")
+                            detail_text.insert('end', f"   哈基米：{a[:40]}...\n\n")
+                        if len(sess['messages']) > 3:
+                            detail_text.insert('end', f"... 还有{len(sess['messages'])-3}轮对话")
+                    detail_text.config(state='disabled')
+            
+            session_listbox.bind('<<ListboxSelect>>', show_session_detail)
+            
+            # 按钮区域
+            btn_frame = tk.Frame(session_win, bg=self.colors['background'])
+            btn_frame.pack(pady=10)
+            
+            def switch_to_session():
+                """切换到选中的会话"""
+                nonlocal current_session
+                selection = session_listbox.curselection()
+                if selection:
+                    index = selection[0]
+                    current_session = all_sessions[index]
+                    session_win.destroy()
+                    refresh_chat_display()
+                    self.hajimi.play_sound("曼波.wav")
+                    print(f"[切换会话] 切换到 {current_session['id']}")
+            
+            def delete_session():
+                """删除选中的会话"""
+                nonlocal current_session
+                selection = session_listbox.curselection()
+                if selection:
+                    index = selection[0]
+                    if len(all_sessions) == 1:
+                        chat_text.config(state='normal')
+                        chat_text.insert('end', "【系统】：不能删除唯一的会话哦～\n\n", 'system')
+                        chat_text.config(state='disabled')
+                        return
+                    
+                    sess_to_delete = all_sessions[index]
+                    del all_sessions[index]
+                    self._save_chat_history(all_sessions)
+                    session_listbox.delete(index)
+                    detail_text.config(state='normal')
+                    detail_text.delete('1.0', tk.END)
+                    detail_text.config(state='disabled')
+                    title_label.config(text=f"📚 历史会话 (共{len(all_sessions)}个)")
+                    
+                    # 如果删除的是当前会话，切换到最后一个
+                    if sess_to_delete['id'] == current_session['id']:
+                        current_session = all_sessions[-1]
+                        refresh_chat_display()
+                    
+                    self.hajimi.play_sound("曼波duang.wav")
+            
+            tk.Button(
+                btn_frame, text="🔄 切换到此会话", font=("微软雅黑", 10, "bold"),
+                bg='#4CAF50', fg='#FFFFFF', command=switch_to_session,
+                width=14, cursor='hand2'
+            ).pack(side='left', padx=5)
+            
+            tk.Button(
+                btn_frame, text="🗑️ 删除会话", font=("微软雅黑", 10, "bold"),
+                bg='#FF6B6B', fg='#FFFFFF', command=delete_session,
+                width=12, cursor='hand2'
+            ).pack(side='left', padx=5)
+            
+            tk.Button(
+                btn_frame, text="❌ 关闭", font=("微软雅黑", 10, "bold"),
+                bg=self.colors['text_light'], fg='#FFFFFF',
+                command=session_win.destroy, width=10, cursor='hand2'
+            ).pack(side='left', padx=5)
+        
+        # 会话管理按钮
+        tk.Button(
+            session_manage_frame, text="🆕 开启新对话", font=("微软雅黑", 10, "bold"),
+            bg='#4CAF50', fg='#FFFFFF', relief='raised', bd=2,
+            width=12, command=new_session, cursor='hand2'
+        ).pack(side='left', padx=5)
+        
+        tk.Button(
+            session_manage_frame, text="📚 查看历史", font=("微软雅黑", 10, "bold"),
+            bg='#9B59B6', fg='#FFFFFF', relief='raised', bd=2,
+            width=12, command=view_sessions, cursor='hand2'
+        ).pack(side='left', padx=5)
         
         # 绑定Enter键发送
         input_entry.bind('<Return>', send_message)
@@ -2459,6 +2750,8 @@ class HajimiUI:
         # 播放欢迎音效
         self.hajimi.play_sound("曼波欧耶.wav")
     
+
+
     def open_background_music(self):
         """打开背景音乐播放器"""
         music_win = tk.Toplevel(self.master)

@@ -34,3 +34,7 @@ ENV/
 *.swp
 *~
 
+# Data files (user's history and chat records)
+data/
+*.json
+
