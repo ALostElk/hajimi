@@ -14,7 +14,7 @@ except ImportError:
 class HajimiAI:
     def __init__(self):
         # 设置通义千问API密钥
-        self.api_key = "sk-cbf4265d902f4721ab7d08d7fedad32f"
+        self.api_key = "set your API key"
         
         # 检查dashscope是否可用
         if DASHSCOPE_AVAILABLE:
